@@ -1,14 +1,17 @@
+#if false
+
 #include <cassert>
 #include <dlfcn.h>
 
 #include <cublas_v2.h>
+
+#include "preload_cublas.hpp"
 
 #include "cprof/allocations.hpp"
 #include "cprof/model/driver.hpp"
 #include "cprof/model/thread.hpp"
 #include "cprof/util_numa.hpp"
 
-#include "preload_cublas.hpp"
 #include "profiler.hpp"
 
 using cprof::model::Location;
@@ -530,3 +533,5 @@ extern "C" cublasStatus_t cublasSdot(cublasHandle_t handle, int n,
   profiler::atomic_out(api->to_json_string() + "\n");
   return ret;
 }
+
+#endif

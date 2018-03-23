@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "address_space.hpp"
+#include "model/cuda/address_space.hpp"
 #include "model/cuda/device.hpp"
 
 namespace model {
@@ -15,10 +15,14 @@ namespace cuda {
  * to fully understand the semantics of various APIs.
  */
 class Hardware {
-  std::vector<cuda::Device> cudaDevices_;
+
+  using Device = model::cuda::Device;
+  using AddressSpace = model::cuda::AddressSpace;
+
+  std::vector<Device> cudaDevices_;
 
 public:
-  const cuda::Device &cuda_device(size_t i) { return cudaDevices_[i]; }
+  const Device &cuda_device(size_t i) { return cudaDevices_[i]; }
   void get_device_properties();
 
   /*! \brief Address space a device participates in

@@ -112,134 +112,139 @@ void record_memcpy(const CUpti_CallbackData *cbInfo, Allocations &allocations,
                    const size_t srcCount, const size_t dstCount,
                    const int peerSrc, const int peerDst) {
 
-  (void)peerSrc;
-  (void)peerDst;
+#if false
+    (void)peerSrc;
+    (void)peerDst;
 
-  Allocation srcAlloc, dstAlloc;
+    Allocation srcAlloc, dstAlloc;
 
-  const int devId = profiler::driver().this_thread().current_device();
+    const int devId = profiler::driver().this_thread().current_device();
 
-  // guess the src and dst address space
-  auto srcAS = AddressSpace::Invalid();
-  auto dstAS = AddressSpace::Invalid();
-  if (profiler::hardware().cuda_device(devId).unifiedAddressing_) {
-    srcAS = dstAS = profiler::hardware().address_space(devId);
-  } else if (MemoryCopyKind::CudaHostToDevice() == kind) {
-    srcAS = AddressSpace::Host();
-    dstAS = profiler::hardware().address_space(devId);
-  } else if (MemoryCopyKind::CudaDeviceToHost() == kind) {
-    dstAS = AddressSpace::Host();
-    srcAS = profiler::hardware().address_space(devId);
-  } else if (MemoryCopyKind::CudaDefault() == kind) {
-    srcAS = dstAS = AddressSpace::CudaUVA();
-  } else {
-    assert(0 && "Unhandled MemoryCopyKind");
-  }
+    // guess the src and dst address space
+    auto srcAS = AddressSpace::Invalid();
+    auto dstAS = AddressSpace::Invalid();
+    if (profiler::hardware().cuda_device(devId).unifiedAddressing_) {
+      srcAS = dstAS = profiler::hardware().address_space(devId);
+    } else if (MemoryCopyKind::CudaHostToDevice() == kind) {
+      srcAS = AddressSpace::Host();
+      dstAS = profiler::hardware().address_space(devId);
+    } else if (MemoryCopyKind::CudaDeviceToHost() == kind) {
+      dstAS = AddressSpace::Host();
+      srcAS = profiler::hardware().address_space(devId);
+    } else if (MemoryCopyKind::CudaDefault() == kind) {
+      srcAS = dstAS = AddressSpace::CudaUVA();
+    } else {
+      assert(0 && "Unhandled MemoryCopyKind");
+    }
 
-  assert(srcAS.is_valid());
-  assert(dstAS.is_valid());
-  // Set address space, and create missing allocations along the way
-  if (MemoryCopyKind::CudaHostToDevice() == kind) {
-    profiler::log() << src << "--[h2d]--> " << dst << std::endl;
+    assert(srcAS.is_valid());
+    assert(dstAS.is_valid());
+    // Set address space, and create missing allocations along the way
+    if (MemoryCopyKind::CudaHostToDevice() == kind) {
+      profiler::log() << src << "--[h2d]--> " << dst << std::endl;
 
-    // Source allocation may not have been created by a CUDA api
-    srcAlloc = allocations.find(src, srcCount, srcAS);
+      // Source allocation may not have been created by a CUDA api
+      srcAlloc = allocations.find(src, srcCount, srcAS);
+      if (!srcAlloc) {
+
+        const auto numaNode = get_numa_node(src);
+        const auto loc = Location::Host(numaNode);
+
+        srcAlloc = allocations.new_allocation(src, srcCount, srcAS,
+                                              Memory::Unknown, loc);
+        profiler::log() << "WARN: Couldn't find src alloc. Created implict host
+    " "allocation= {"
+                        << srcAS.str() << "}[ " << src << " , +" << srcCount
+                        << " )" << std::endl;
+      }
+    } else if (MemoryCopyKind::CudaDeviceToHost() == kind) {
+      profiler::log() << src << "--[d2h]--> " << dst << std::endl;
+
+      // Destination allocation may not have been created by a CUDA api
+      // FIXME: we may be copying only a slice of an existing allocation. if
+      // it overlaps, it should be joined
+      dstAlloc = allocations.find(dst, dstCount, dstAS);
+      if (!dstAlloc) {
+
+        const auto numaNode = get_numa_node(dst);
+        const auto loc = Location::Host(numaNode);
+
+        dstAlloc = allocations.new_allocation(dst, dstCount, dstAS,
+                                              Memory::Unknown, loc);
+        profiler::log() << "WARN: Couldn't find dst alloc. Created implict host
+    " "allocation= {"
+                        << dstAS.str() << "}[ " << dst << " , +" << dstCount
+                        << " )" << std::endl;
+      }
+    }
+
+    // Look for existing src / dst allocations.
+    // Either we just made it, or it should already exist.
     if (!srcAlloc) {
-
-      const auto numaNode = get_numa_node(src);
-      const auto loc = Location::Host(numaNode);
-
-      srcAlloc = allocations.new_allocation(src, srcCount, srcAS,
-                                            Memory::Unknown, loc);
-      profiler::log() << "WARN: Couldn't find src alloc. Created implict host "
-                         "allocation= {"
-                      << srcAS.str() << "}[ " << src << " , +" << srcCount
-                      << " )" << std::endl;
+      srcAlloc = allocations.find(src, srcCount, srcAS);
+      assert(srcAlloc);
     }
-  } else if (MemoryCopyKind::CudaDeviceToHost() == kind) {
-    profiler::log() << src << "--[d2h]--> " << dst << std::endl;
-
-    // Destination allocation may not have been created by a CUDA api
-    // FIXME: we may be copying only a slice of an existing allocation. if
-    // it overlaps, it should be joined
-    dstAlloc = allocations.find(dst, dstCount, dstAS);
     if (!dstAlloc) {
-
-      const auto numaNode = get_numa_node(dst);
-      const auto loc = Location::Host(numaNode);
-
-      dstAlloc = allocations.new_allocation(dst, dstCount, dstAS,
-                                            Memory::Unknown, loc);
-      profiler::log() << "WARN: Couldn't find dst alloc. Created implict host "
-                         "allocation= {"
-                      << dstAS.str() << "}[ " << dst << " , +" << dstCount
-                      << " )" << std::endl;
+      dstAlloc = allocations.find(dst, dstCount, dstAS);
+      assert(dstAlloc);
     }
-  }
 
-  // Look for existing src / dst allocations.
-  // Either we just made it, or it should already exist.
-  if (!srcAlloc) {
-    srcAlloc = allocations.find(src, srcCount, srcAS);
-    assert(srcAlloc);
-  }
-  if (!dstAlloc) {
-    dstAlloc = allocations.find(dst, dstCount, dstAS);
-    assert(dstAlloc);
-  }
+    assert(srcAlloc && "Couldn't find or create src allocation");
+    assert(dstAlloc && "Couldn't find or create dst allocation");
+    // There may not be a source value, because it may have been initialized
+    // on the host
+    auto srcVal = allocations.find_value(src, srcCount,
+    srcAlloc.address_space()); assert(srcVal && "Value should have been created
+    with allocation"); profiler::log() << "memcpy: found src value srcId=" <<
+    srcVal.id()
+                    << std::endl;
+    profiler::log() << "WARN: Setting srcVal size by memcpy count" << std::endl;
+    srcVal.set_size(srcCount);
 
-  assert(srcAlloc && "Couldn't find or create src allocation");
-  assert(dstAlloc && "Couldn't find or create dst allocation");
-  // There may not be a source value, because it may have been initialized
-  // on the host
-  auto srcVal = allocations.find_value(src, srcCount, srcAlloc.address_space());
-  assert(srcVal && "Value should have been created with allocation");
-  profiler::log() << "memcpy: found src value srcId=" << srcVal.id()
-                  << std::endl;
-  profiler::log() << "WARN: Setting srcVal size by memcpy count" << std::endl;
-  srcVal.set_size(srcCount);
+    // always create a new dst value
+    assert(srcVal);
+    auto dstVal = dstAlloc.new_value(dst, dstCount, srcVal.initialized());
+    assert(dstVal);
+    // dstVal->record_meta_append(cbInfo->functionName); // FIXME
 
-  // always create a new dst value
-  assert(srcVal);
-  auto dstVal = dstAlloc.new_value(dst, dstCount, srcVal.initialized());
-  assert(dstVal);
-  // dstVal->record_meta_append(cbInfo->functionName); // FIXME
+    api->add_input(srcVal);
+    api->add_output(dstVal);
+    api->add_kv("kind", kind.str());
+    api->add_kv("srcCount", srcCount);
+    api->add_kv("dstCount", dstCount);
+    profiler::atomic_out(api->to_json_string() + "\n");
 
-  api->add_input(srcVal);
-  api->add_output(dstVal);
-  api->add_kv("kind", kind.str());
-  api->add_kv("srcCount", srcCount);
-  api->add_kv("dstCount", dstCount);
-  profiler::atomic_out(api->to_json_string() + "\n");
+    if (Profiler::instance().is_zipkin_enabled()) {
+      auto b = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+                   api->wall_start())
+                   .time_since_epoch();
 
-  if (Profiler::instance().is_zipkin_enabled()) {
-    auto b = std::chrono::time_point_cast<std::chrono::nanoseconds>(
-                 api->wall_start())
-                 .time_since_epoch();
+      auto span = Profiler::instance().memcpyTracer_->StartSpan(
+          std::to_string(cbInfo->correlationId),
+          {ChildOf(&Profiler::instance().rootSpan_->context()),
+           opentracing::StartTimestamp(b)});
 
-    auto span = Profiler::instance().memcpyTracer_->StartSpan(
-        std::to_string(cbInfo->correlationId),
-        {ChildOf(&Profiler::instance().rootSpan_->context()),
-         opentracing::StartTimestamp(b)});
+      // span->SetTag("Transfer size", memcpyRecord->bytes);
+      // span->SetTag("Transfer type",
+      // memcpy_type_to_string(memcpyRecord->copyKind)); span->SetTag("Host
+      // Thread", std::to_string(threadId));
 
-    // span->SetTag("Transfer size", memcpyRecord->bytes);
-    // span->SetTag("Transfer type",
-    // memcpy_type_to_string(memcpyRecord->copyKind)); span->SetTag("Host
-    // Thread", std::to_string(threadId));
+      // auto timeElapsed = memcpyRecord->end - memcpyRecord->start;
+      // span->SetTag("CUPTI Duration", std::to_string(timeElapsed));
+      // auto err = tracer->Inject(current_span->context(), carrier);
+      auto e =
+          std::chrono::time_point_cast<std::chrono::nanoseconds>(api->wall_end())
+              .time_since_epoch();
 
-    // auto timeElapsed = memcpyRecord->end - memcpyRecord->start;
-    // span->SetTag("CUPTI Duration", std::to_string(timeElapsed));
-    // auto err = tracer->Inject(current_span->context(), carrier);
-    auto e =
-        std::chrono::time_point_cast<std::chrono::nanoseconds>(api->wall_end())
-            .time_since_epoch();
-
-    span->Finish({opentracing::FinishTimestamp(e)});
-  }
+      span->Finish({opentracing::FinishTimestamp(e)});
+    }
+#endif
 }
 
 static void handleCudaMemcpy(Allocations &allocations,
                              const CUpti_CallbackData *cbInfo) {
+
+#if false
 
   // extract API call parameters
   auto params = ((cudaMemcpy_v3020_params *)(cbInfo->functionParams));
@@ -271,10 +276,13 @@ static void handleCudaMemcpy(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaMemcpyAsync(Allocations &allocations,
                                   const CUpti_CallbackData *cbInfo) {
+#if false
+
   // extract API call parameters
   auto params = ((cudaMemcpyAsync_v3020_params *)(cbInfo->functionParams));
   const uintptr_t dst = (uintptr_t)params->dst;
@@ -301,10 +309,12 @@ static void handleCudaMemcpyAsync(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaMemcpy2DAsync(Allocations &allocations,
                                     const CUpti_CallbackData *cbInfo) {
+#if false
   // extract API call parameters
   auto params = ((cudaMemcpy2DAsync_v3020_params *)(cbInfo->functionParams));
   const uintptr_t dst = (uintptr_t)params->dst;
@@ -337,10 +347,13 @@ static void handleCudaMemcpy2DAsync(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaMemcpyPeerAsync(Allocations &allocations,
                                       const CUpti_CallbackData *cbInfo) {
+
+#if false
   // extract API call parameters
   auto params = ((cudaMemcpyPeerAsync_v4000_params *)(cbInfo->functionParams));
   const uintptr_t dst = (uintptr_t)params->dst;
@@ -369,10 +382,13 @@ static void handleCudaMemcpyPeerAsync(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaMallocManaged(Allocations &allocations,
                                     const CUpti_CallbackData *cbInfo) {
+
+#if false
   auto params = ((cudaMallocManaged_v6000_params *)(cbInfo->functionParams));
   const uintptr_t devPtr = (uintptr_t)(*(params->devPtr));
   const size_t size = params->size;
@@ -403,10 +419,13 @@ static void handleCudaMallocManaged(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 void record_mallochost(Allocations &allocations, const uintptr_t ptr,
                        const size_t size) {
+
+#if false
 
   auto AM = cprof::model::Memory::Pagelocked;
 
@@ -443,10 +462,13 @@ static void handleCudaMallocHost(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCuMemHostAlloc(Allocations &allocations,
                                  const CUpti_CallbackData *cbInfo) {
+
+#if false
 
   auto &ts = profiler::driver().this_thread();
   if (ts.in_child_api() && ts.parent_api()->is_runtime() &&
@@ -489,10 +511,13 @@ static void handleCuMemHostAlloc(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCuLaunchKernel(Allocations &allocations,
                                  const CUpti_CallbackData *cbInfo) {
+
+#if false
 
   (void)allocations;
 
@@ -515,9 +540,11 @@ static void handleCuLaunchKernel(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCuModuleGetFunction(const CUpti_CallbackData *cbInfo) {
+#if false
 
   auto params = ((cuModuleGetFunction_params *)(cbInfo->functionParams));
   const CUfunction hfunc = *(params->hfunc);
@@ -534,10 +561,12 @@ static void handleCuModuleGetFunction(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCuModuleGetGlobal_v2(const CUpti_CallbackData *cbInfo) {
 
+#if false
   // auto params = ((cuModuleGetGlobal_v2_params *)(cbInfo->functionParams));
 
   // const CUdeviceptr dptr = *(params->dptr);
@@ -559,9 +588,12 @@ static void handleCuModuleGetGlobal_v2(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCuCtxSetCurrent(const CUpti_CallbackData *cbInfo) {
+
+#if false
 
   auto params = ((cuCtxSetCurrent_params *)(cbInfo->functionParams));
   const CUcontext ctx = params->ctx;
@@ -575,10 +607,13 @@ static void handleCuCtxSetCurrent(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaFreeHost(Allocations &allocations,
                                const CUpti_CallbackData *cbInfo) {
+
+#if false
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
   } else if (cbInfo->callbackSite == CUPTI_API_EXIT) {
     auto params = ((cudaFreeHost_v3020_params *)(cbInfo->functionParams));
@@ -602,10 +637,13 @@ static void handleCudaFreeHost(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaMalloc(Allocations &allocations,
                              const CUpti_CallbackData *cbInfo) {
+
+#if false
   const auto params = ((cudaMalloc_v3020_params *)(cbInfo->functionParams));
   const uintptr_t devPtr = (uintptr_t)(*(params->devPtr));
   const size_t size = params->size;
@@ -644,10 +682,13 @@ static void handleCudaMalloc(Allocations &allocations,
   } else {
     assert(0 && "how did we get here?");
   }
+#endif
 }
 
 static void handleCudaFree(Allocations &allocations,
                            const CUpti_CallbackData *cbInfo) {
+
+#if false
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
   } else if (cbInfo->callbackSite == CUPTI_API_EXIT) {
     auto params = ((cudaFree_v3020_params *)(cbInfo->functionParams));
@@ -674,9 +715,11 @@ static void handleCudaFree(Allocations &allocations,
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaSetDevice(const CUpti_CallbackData *cbInfo) {
+#if false
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
     profiler::log() << "callback: cudaSetDevice entry" << std::endl;
     auto params = ((cudaSetDevice_v3020_params *)(cbInfo->functionParams));
@@ -687,9 +730,11 @@ static void handleCudaSetDevice(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaConfigureCall(const CUpti_CallbackData *cbInfo) {
+#if false
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
     profiler::log() << "INFO: ( tid=" << cprof::model::get_thread_id()
                     << " ) callback: cudaConfigureCall entry" << std::endl;
@@ -710,9 +755,11 @@ static void handleCudaConfigureCall(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaSetupArgument(const CUpti_CallbackData *cbInfo) {
+#if false
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
     profiler::log() << "callback: cudaSetupArgument entry (tid="
                     << cprof::model::get_thread_id() << ")" << std::endl;
@@ -726,9 +773,11 @@ static void handleCudaSetupArgument(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaStreamCreate(const CUpti_CallbackData *cbInfo) {
+#if false
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
   } else if (cbInfo->callbackSite == CUPTI_API_EXIT) {
     profiler::log() << "INFO: callback: cudaStreamCreate entry" << std::endl;
@@ -739,9 +788,11 @@ static void handleCudaStreamCreate(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaStreamDestroy(const CUpti_CallbackData *cbInfo) {
+#if false
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
     profiler::log() << "INFO: callback: cudaStreamCreate entry" << std::endl;
     profiler::log() << "WARN: ignoring cudaStreamDestroy" << std::endl;
@@ -752,9 +803,11 @@ static void handleCudaStreamDestroy(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 static void handleCudaStreamSynchronize(const CUpti_CallbackData *cbInfo) {
+#if false
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
     profiler::log() << "INFO: callback: cudaStreamSynchronize entry"
                     << std::endl;
@@ -766,11 +819,13 @@ static void handleCudaStreamSynchronize(const CUpti_CallbackData *cbInfo) {
   } else {
     assert(0 && "How did we get here?");
   }
+#endif
 }
 
 void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
                                     CUpti_CallbackId cbid,
                                     const CUpti_CallbackData *cbInfo) {
+
   (void)userdata; // data supplied at subscription
 
   if (!profiler::driver().this_thread().is_cupti_callbacks_enabled()) {

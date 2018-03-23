@@ -1,8 +1,9 @@
-#include "numaif.h"
-#include "unistd.h"
 #include <cassert>
 
-#include "cprof/util_numa.hpp"
+#include <numaif.h>
+#include <unistd.h>
+
+#include "util_numa.hpp"
 
 static void *get_page(const void *ptr, const int page_size) {
   const auto u = reinterpret_cast<uintptr_t>(ptr);

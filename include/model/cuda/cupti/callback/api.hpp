@@ -1,5 +1,5 @@
-#ifndef API_RECORD_HPP
-#define API_RECORD_HPP
+#ifndef API_HPP
+#define API_HPP
 
 #include <chrono>
 #include <map>
@@ -8,13 +8,24 @@
 
 #include <cupti.h>
 
-class Api {
+#include "nlohmann/json.hpp"
+
+#include "model/cuda/api.hpp"
+
+namespace model {
+namespace cuda {
+namespace cupti {
+namespace callback {
+
+class Api : public model::cuda::Api {
+  using json = nlohmann::json;
+
 public:
   typedef uint64_t id_type;
 
 private:
   typedef std::chrono::high_resolution_clock::time_point time_point_t;
-  std::vector<void *> args_;
+  std::vector<uintptr_t> args_;
   std::string apiName_;
   std::string kernelName_;
   int device_;
@@ -33,32 +44,24 @@ public:
       const CUpti_CallbackDomain domain, const CUpti_CallbackId cbid,
       const int64_t correlationId, const CUpti_CallbackData *cbInfo)
       : apiName_(apiName), device_(device), domain_(domain), cbid_(cbid),
-        correlationId_(correlationId), cbInfo_(cbInfo), id_(new_id()),
-        wallStart_(std::chrono::nanoseconds(0)),
+        correlationId_(correlationId), wallStart_(std::chrono::nanoseconds(0)),
         wallEnd_(std::chrono::nanoseconds(0)) {}
   Api(const int device, const CUpti_CallbackDomain domain,
       const CUpti_CallbackId cbid, const CUpti_CallbackData *cbInfo)
       : Api(cbInfo->functionName, device, domain, cbid, cbInfo->correlationId,
             cbInfo) {}
-  // Not all ApiRecords come from CUPTI
-  Api(const std::string &apiName, const std::string &kernelName,
-      const int device)
-      : Api(apiName, device, CUPTI_CB_DOMAIN_INVALID, -1, -1, nullptr) {
-    kernelName_ = kernelName;
-  }
-  Api(const std::string &name, const int device) : Api(name, "", device) {}
 
   void add_arg(const void *);
   void add_kv(const std::string &key, const std::string &val);
   void add_kv(const std::string &key, const size_t &val);
-  void set_wall_start(const cprof::time_point_t &start);
-  void set_wall_end(const cprof::time_point_t &end);
-  void set_wall_time(const cprof::time_point_t &start,
-                     const cprof::time_point_t &end);
+  void set_wall_start(const time_point_t &start);
+  void set_wall_end(const time_point_t &end);
+  void set_wall_time(const time_point_t &start, const time_point_t &end);
 
   int device() const { return device_; }
   const std::string &name() const { return apiName_; }
 
+  json to_json() const;
   std::string to_json_string() const;
 
   bool is_runtime() const { return domain_ == CUPTI_CB_DOMAIN_RUNTIME_API; }
@@ -67,6 +70,14 @@ public:
 
   const time_point_t &wall_end() const { return wallEnd_; }
   const time_point_t &wall_start() const { return wallStart_; }
+
+  uint64_t wall_start_ns() const;
+  uint64_t wall_end_ns() const;
 };
+
+} // namespace callback
+} // namespace cupti
+} // namespace cuda
+} // namespace model
 
 #endif

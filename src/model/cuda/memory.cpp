@@ -1,8 +1,11 @@
-#include "cprof/model/memory.hpp"
+#include "model/cuda/memory.hpp"
+
+#include <cassert>
 
 using json = nlohmann::json;
+using namespace model::cuda;
 
-json cprof::model::to_json(const Memory &m) {
+json to_json(const Memory &m) {
   json j;
   switch (m) {
   case Memory::Unknown:

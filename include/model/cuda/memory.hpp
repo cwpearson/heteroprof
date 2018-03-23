@@ -1,13 +1,10 @@
-#ifndef CPROF_MODEL_MEMORY_HPP
-#define CPROF_MODEL_MEMORY_HPP
-
-#include <cstdint>
-#include <string>
+#ifndef MODEL_CUDA_MEMORY_HPP
+#define MODEL_CUDA_MEMORY_HPP
 
 #include <nlohmann/json.hpp>
 
-namespace cprof {
 namespace model {
+namespace cuda {
 
 enum class Memory {
   Unknown,    ///< an unknown type of memory
@@ -19,7 +16,7 @@ enum class Memory {
 
 nlohmann::json to_json(const Memory &m);
 
+} // namespace cuda
 } // namespace model
-} // namespace cprof
 
 #endif

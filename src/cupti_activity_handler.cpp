@@ -1,18 +1,21 @@
 #include <string>
 
-#include "model/cupti_activity/compute.hpp"
-#include "model/cupti_activity/transfer.hpp"
-
 #include "cupti_activity_handler.hpp"
+
+#include "model/cuda/cupti/activity/compute.hpp"
+#include "model/cuda/cupti/activity/transfer.hpp"
+
 #include "profiler.hpp"
+
+using namespace model::cuda::cupti::activity;
 
 //
 // KERNEL
 //
 static void handleKernel(const CUpti_ActivityKernel3 *record) {
   assert(record);
-  auto compute = model::activity::Compute(record);
-  profiler::record_json(compute.to_json());
+  auto compute = Compute(record);
+  profiler::record(compute.to_json());
 }
 
 //
@@ -20,8 +23,8 @@ static void handleKernel(const CUpti_ActivityKernel3 *record) {
 //
 static void handleMemcpy(const CUpti_ActivityMemcpy *record) {
   assert(record);
-  auto transfer = model::activity::Transfer(record);
-  profiler::record_json(transfer.to_json());
+  auto transfer = Transfer(record);
+  profiler::record(transfer.to_json());
 }
 
 void activityHander(const CUpti_Activity *record) {
@@ -38,9 +41,6 @@ void activityHander(const CUpti_Activity *record) {
     handleMemcpy(activity_cast);
     break;
   }
-  default: {
-    //   auto activity_cast = record;
-    break;
-  }
+  default: { break; }
   };
 }

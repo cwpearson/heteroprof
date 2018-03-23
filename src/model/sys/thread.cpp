@@ -1,11 +1,13 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-#include "cprof/model/thread.hpp"
+#include "model/sys/thread.hpp"
 
-namespace cprof {
 namespace model {
+namespace sys {
+
+typedef pid_t tid_t;
 
 tid_t get_thread_id() { return syscall(SYS_gettid); }
+} // namespace sys
 } // namespace model
-} // namespace cprof

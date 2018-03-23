@@ -1,14 +1,17 @@
+#if false
+
 #include <cassert>
 #include <dlfcn.h>
 
 #include <cudnn.h>
+
+#include "preload_cudnn.hpp"
 
 #include "cprof/allocations.hpp"
 #include "cprof/model/driver.hpp"
 #include "cprof/model/thread.hpp"
 
 #include "cudnn_util.hpp"
-#include "preload_cudnn.hpp"
 #include "profiler.hpp"
 
 namespace preload_cudnn {
@@ -590,3 +593,5 @@ extern "C" cudnnStatus_t cudnnPoolingForward(
 // cudnnRNNForwardInference
 // cudnnRNNBackwardWeights
 // cudnnRNNBackwardData
+
+#endif

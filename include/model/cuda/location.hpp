@@ -1,12 +1,12 @@
-#ifndef CPROF_MODEL_LOCATION_HPP
-#define CPROF_MODEL_LOCATION_HPP
+#ifndef MODEL_CUDA_LOCATION_HPP
+#define MODEL_CUDA_LOCATION_HPP
 
 #include <string>
 
 #include <nlohmann/json.hpp>
 
-namespace cprof {
 namespace model {
+namespace cuda {
 
 class Location {
   using json = nlohmann::json;
@@ -48,7 +48,7 @@ public:
   std::string to_json_string() const;
 };
 
+} // namespace cuda
 } // namespace model
-} // namespace cprof
 
 #endif

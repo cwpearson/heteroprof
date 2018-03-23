@@ -8,13 +8,18 @@
 
 #include <cupti.h>
 
-#include "cprof/chrome_tracing/complete_event.hpp"
-#include "cprof/util_cupti.hpp"
+#include "nlohmann/json.hpp"
 
-namespace cprof {
+#include "util_cupti.hpp"
+
+namespace model {
+namespace cuda {
+namespace cupti {
 namespace activity {
 
 class Transfer {
+  using json = nlohmann::json;
+
 public:
   typedef std::chrono::high_resolution_clock::time_point time_point_t;
   typedef std::chrono::nanoseconds duration_t;
@@ -27,8 +32,8 @@ public:
   size_t start_ns() const;
   size_t dur_ns() const;
 
+  json to_json() const;
   std::string to_json_string() const;
-  cprof::chrome_tracing::CompleteEvent chrome_complete_event() const;
 
 private:
   // General fields
@@ -40,9 +45,9 @@ private:
   // CUDA-specific fields (FIXME: move to derived class)
   uint32_t cudaDeviceId_;
   Kind kind_;
-  cprof::CuptiActivityMemcpyKind cudaMemcpyKind_;
-  cprof::CuptiActivityMemoryKind srcKind_;
-  cprof::CuptiActivityMemoryKind dstKind_;
+  CuptiActivityMemcpyKind cudaMemcpyKind_;
+  CuptiActivityMemoryKind srcKind_;
+  CuptiActivityMemoryKind dstKind_;
   uint32_t contextId_;
   uint32_t correlationId_;
   uint8_t flags_;
@@ -51,6 +56,8 @@ private:
 };
 
 } // namespace activity
-} // namespace cprof
+} // namespace cupti
+} // namespace cuda
+} // namespace model
 
 #endif

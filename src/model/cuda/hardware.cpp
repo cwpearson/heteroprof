@@ -1,10 +1,10 @@
 #include <cuda_runtime.h>
 
-#include "cprof/model/hardware.hpp"
-#include "cprof/util_cuda.hpp"
+#include "model/cuda/hardware.hpp"
 #include "util/logging.hpp"
+#include "util_cuda.hpp"
 
-using namespace cprof::model;
+using namespace model::cuda;
 
 void Hardware::get_device_properties() {
   static bool done = false;

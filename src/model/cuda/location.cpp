@@ -1,7 +1,7 @@
-#include "cprof/model/location.hpp"
+#include "model/cuda/location.hpp"
 
 using json = nlohmann::json;
-using cprof::model::Location;
+using model::cuda::Location;
 
 json Location::to_json() const {
   json j;

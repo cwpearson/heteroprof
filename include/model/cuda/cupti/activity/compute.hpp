@@ -8,13 +8,18 @@
 
 #include <cupti.h>
 
-#include "cprof/chrome_tracing/complete_event.hpp"
-#include "cprof/util_cupti.hpp"
+#include "nlohmann/json.hpp"
 
-namespace cprof {
+#include "util_cupti.hpp"
+
+namespace model {
+namespace cuda {
+namespace cupti {
 namespace activity {
 
 class Compute {
+  using json = nlohmann::json;
+
 public:
   typedef std::chrono::high_resolution_clock::time_point time_point_t;
   typedef std::chrono::nanoseconds duration_t;
@@ -28,8 +33,8 @@ public:
   size_t dur_ns() const;
   size_t completed_ns() const;
 
+  json to_json() const;
   std::string to_json_string() const;
-  cprof::chrome_tracing::CompleteEvent chrome_complete_event() const;
 
 private:
   // General fields
@@ -66,6 +71,8 @@ private:
 };
 
 } // namespace activity
-} // namespace cprof
+} // namespace cupti
+} // namespace cuda
+} // namespace model
 
 #endif

@@ -1,15 +1,13 @@
-#include <boost/any.hpp>
+#include <chrono>
 #include <iostream>
 #include <thread>
 #include <vector>
 
-#include "cprof/chrome_tracing/complete_event.hpp"
-#include "cprof/model/thread.hpp"
-#include "cprof/util_cupti.hpp"
+#include "model/sys/thread.hpp"
+#include "util_cupti.hpp"
 
 #include "cupti_activity.hpp"
 #include "profiler.hpp"
-#include "timer.hpp"
 
 namespace cupti_activity_config {
 size_t localBufferSize = 1 * 1024 * 1024;
@@ -74,16 +72,16 @@ void CUPTIAPI cuptiActivityBufferRequested(uint8_t **buffer, size_t *size,
   *maxNumRecords = 0; // as many records as possible
 
   if (*buffer == NULL) {
-    profiler::err() << "ERROR: out of memory" << std::endl;
+    profiler::log() << "ERROR: out of memory" << std::endl;
     exit(-1);
   }
 }
 
-void threadFunc(uint8_t *localBuffer, size_t validSize) {
+static void threadFunc(uint8_t *localBuffer, size_t validSize) {
 
   using cupti_activity_config::call_activity_handlers;
 
-  auto start = cprof::now();
+  auto start = std::chrono::high_resolution_clock::now();
 
   CUpti_Activity *record = NULL;
   if (validSize > 0) {
@@ -93,38 +91,17 @@ void threadFunc(uint8_t *localBuffer, size_t validSize) {
         break;
       }
 
-      CUPTI_CHECK(err, profiler::err());
-      profiler::timer().activity_add_annotations(record);
+      CUPTI_CHECK(err, profiler::log());
       call_activity_handlers(record);
     } while (true);
   }
 
-  auto end = cprof::now();
-
-  auto event = cprof::chrome_tracing::CompleteEventNs(
-      "", {}, cprof::nanos(start), (cprof::nanos(end) - cprof::nanos(start)),
-      "profiler", "cupti record handler");
-
-  Profiler::instance().chrome_tracer().write_event(event);
+  auto end = std::chrono::high_resolution_clock::now();
 }
 
 void CUPTIAPI cuptiActivityBufferCompleted(CUcontext ctx, uint32_t streamId,
                                            uint8_t *buffer, size_t size,
                                            size_t validSize) {
 
-  span_t activity_span;
-  if (Profiler::instance().is_zipkin_enabled()) {
-    activity_span = Profiler::instance().overheadTracer_->StartSpan(
-        "Activity API",
-        {FollowsFrom(&Profiler::instance().rootSpan_->context())});
-  }
-  // uint8_t *localBuffer;
-  // localBuffer = (uint8_t *)malloc(BUFFER_SIZE * 1024 + ALIGN_SIZE);
-  // ALIGN_BUFFER(localBuffer, ALIGN_SIZE);
-  // memcpy(localBuffer, buffer, validSize);
-  // threadFunc()
   threadFunc(buffer, validSize);
-  if (Profiler::instance().is_zipkin_enabled()) {
-    activity_span->Finish();
-  }
 }

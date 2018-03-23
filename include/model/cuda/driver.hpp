@@ -14,8 +14,8 @@
 #include <cupti.h>
 #include <nccl.h>
 
-#include "model/cuda/cupti/callback/api.hpp"
-#include "model/cuda/cupti/callback/configured_call.hpp"
+#include "model/cuda/api.hpp"
+#include "model/cuda/configured_call.hpp"
 #include "model/cuda/location.hpp"
 #include "model/sys/thread.hpp"
 #include "util_numa.hpp"
@@ -24,13 +24,17 @@ namespace model {
 namespace cuda {
 
 class ThreadState {
+
+  using Api = model::cuda::Api;
+  using ConfiguredCall = model::cuda::ConfiguredCall;
+
 private:
   int currentDevice_;
   bool cuptiCallbacksEnabled_;
   std::vector<CUcontext> contextStack_;
 
   ConfiguredCall configuredCall_;
-  std::vector<ApiRecordRef> apiStack_;
+  std::vector<Api> apiStack_;
 
 public:
   ThreadState() : currentDevice_(0), cuptiCallbacksEnabled_(true) {}
@@ -38,14 +42,12 @@ public:
   int current_device() const { return currentDevice_; }
   void set_device(const int device) { currentDevice_ = device; }
 
-  void api_enter(const int device, const CUpti_CallbackDomain domain,
-                 const CUpti_CallbackId cbid, const CUpti_CallbackData *cbInfo);
-  void api_exit(const CUpti_CallbackDomain domain, const CUpti_CallbackId cbid,
-                const CUpti_CallbackData *cbInfo);
+  void api_enter(const Api &a);
+  Api api_exit();
 
   bool in_child_api() const { return apiStack_.size() >= 2; }
-  const ApiRecordRef &parent_api() const;
-  ApiRecordRef &current_api();
+  const model::cuda::Api &parent_api() const;
+  model::cuda::Api &current_api();
 
   void pause_cupti_callbacks();
   void resume_cupti_callbacks();
@@ -79,18 +81,21 @@ public:
 class Driver {
 public:
   typedef ThreadState mapped_type;
-  typedef tid_t key_type;
+  typedef model::sys::tid_t key_type;
   typedef std::pair<key_type, mapped_type> value_type;
 
 private:
   typedef std::map<key_type, mapped_type> ThreadMap;
   ThreadMap threadStates_;
+#if false
   std::map<const cublasHandle_t, int> cublasHandleToDevice_;
   std::map<const cudnnHandle_t, int> cudnnHandleToDevice_;
   std::map<const ncclComm_t, int> ncclCommToDevice_;
+#endif
   std::mutex access_mutex_;
 
 public:
+#if false
   void track_cublas_handle(const cublasHandle_t h, const int device) {
     std::lock_guard<std::mutex> guard(access_mutex_);
     cublasHandleToDevice_[h] = device;
@@ -126,8 +131,10 @@ public:
     logging::atomic_err(ss.str());
     return dev;
   }
-
-  mapped_type &this_thread() { return threadStates_[get_thread_id()]; }
+#endif
+  mapped_type &this_thread() {
+    return threadStates_[model::sys::get_thread_id()];
+  }
 };
 
 } // namespace cuda

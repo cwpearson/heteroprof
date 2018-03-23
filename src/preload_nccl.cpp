@@ -1,3 +1,5 @@
+#if false
+
 #include <cassert>
 #include <dlfcn.h>
 #include <mutex>
@@ -5,12 +7,12 @@
 
 #include <nccl.h>
 
-#include "cprof/allocations.hpp"
-#include "cprof/model/driver.hpp"
-#include "cprof/model/thread.hpp"
+#include "preload_nccl.hpp"
+
+#include "cprof/model/cuda/driver.hpp"
+#include "cprof/model/sys/thread.hpp"
 #include "util/logging.hpp"
 
-#include "preload_nccl.hpp"
 #include "profiler.hpp"
 
 using cprof::Value;
@@ -44,6 +46,7 @@ static size_t ncclSizeOf(const ncclDataType_t t) noexcept {
 static void register_ncclBcast(uintptr_t buff, size_t count,
                                ncclDataType_t datatype, int root,
                                ncclComm_t comm) {
+
   static std::mutex access;
   static Value rootBuffVal = Value();
   static std::vector<Value> dstBuffVals;
@@ -295,3 +298,5 @@ extern "C" ncclResult_t nccCommDestroy(ncclComm_t comm) {
   profiler::driver().this_thread().resume_cupti_callbacks();
   return ret;
 }
+
+#endif

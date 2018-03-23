@@ -5,6 +5,8 @@
 #include <memory>
 #include <ostream>
 
+#include "nlohmann/json.hpp"
+
 #include "model/cuda/driver.hpp"
 #include "model/cuda/hardware.hpp"
 #include "util/environment_variable.hpp"
@@ -13,12 +15,11 @@
 
 #include "cupti_activity.hpp"
 
-#include <nlohmann/json.hpp>
-
 namespace profiler {
-cprof::model::Driver &driver();
-cprof::model::Hardware &hardware();
-Timer &timer();
+using model::cuda::Driver;
+using model::cuda::Hardware;
+Driver &driver();
+Hardware &hardware();
 
 std::ostream &log();
 void record(const std::string &s);
@@ -26,9 +27,11 @@ void record(const nlohmann::json &j);
 } // namespace profiler
 
 class Profiler {
-  friend cprof::model::Driver &profiler::driver();
-  friend cprof::model::Hardware &profiler::hardware();
-  friend Timer &profiler::timer();
+  using Driver = model::cuda::Driver;
+  using Hardware = model::cuda::Hardware;
+
+  friend Driver &profiler::driver();
+  friend Hardware &profiler::hardware();
 
 public:
   ~Profiler();
@@ -43,15 +46,10 @@ private:
   Profiler();
   Profiler(const Profiler &) = delete;
   void operator=(const Profiler &) = delete;
-  enum class Mode { DetailTimeline };
 
   // CUDA model
-  cprof::model::Hardware hardware_;
-  cprof::model::Driver driver_;
-  cprof::Allocations allocations_;
-
-  // from environment variables
-  Mode mode_;
+  Hardware hardware_;
+  Driver driver_;
 
   CUpti_SubscriberHandle cuptiCallbackSubscriber_;
 };
