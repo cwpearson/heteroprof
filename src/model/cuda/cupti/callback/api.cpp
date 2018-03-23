@@ -45,4 +45,3 @@ json Api::to_json() const {
   j["api"]["kv"] = json(kv_);
   return j;
 }
-std::string Api::to_json_string() const { return to_json().dump(); }

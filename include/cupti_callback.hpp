@@ -5,6 +5,6 @@
 
 void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
                                     CUpti_CallbackId cbid,
-                                    const CUpti_CallbackData *cbInfo);
+                                    CUpti_CallbackData *cbdata);
 
 #endif

@@ -58,8 +58,7 @@ public:
 
   int device() const { return device_; }
 
-  json to_json() const;
-  std::string to_json_string() const;
+  virtual json to_json() const;
 
   const time_point_t &wall_end() const { return wallEnd_; }
   const time_point_t &wall_start() const { return wallStart_; }

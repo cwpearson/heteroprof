@@ -17,7 +17,7 @@ class Api {
 public:
   Api(const tid_t callingThread, const std::string &name);
 
-  json to_json() const;
+  virtual json to_json() const;
   const std::string &name() const;
 
 protected:

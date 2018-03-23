@@ -11,7 +11,6 @@
 #include "model/cuda/hardware.hpp"
 #include "util/environment_variable.hpp"
 #include "util/logging.hpp"
-#include "util/tracer.hpp"
 
 #include "cupti_activity.hpp"
 

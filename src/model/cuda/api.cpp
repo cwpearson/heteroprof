@@ -15,6 +15,7 @@ json Api::to_json() const {
   j["calling_tid"] = callingThread_;
   return j;
 }
+
 const std::string &Api::name() const { return name_; }
 
 } // namespace cuda

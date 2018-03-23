@@ -813,7 +813,7 @@ static void handleCudaStreamSynchronize(const CUpti_CallbackData *cbInfo) {
 
 void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
                                     CUpti_CallbackId cbid,
-                                    const CUpti_CallbackData *cbInfo) {
+                                    CUpti_CallbackData *cbdata) {
 
   (void)userdata; // data supplied at subscription
 
@@ -821,14 +821,15 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
     return;
   }
 
-  // profiler::timer().callback_add_annotations(cbInfo, cbid);
-
   if ((domain == CUPTI_CB_DOMAIN_DRIVER_API) ||
       (domain == CUPTI_CB_DOMAIN_RUNTIME_API)) {
-    if (cbInfo->callbackSite == CUPTI_API_ENTER) {
+    if (cbdata->callbackSite == CUPTI_API_ENTER) {
 
-      auto a = model::cuda::cupti::callback::Api(model::sys::get_thread_id(),
-                                                 cbInfo);
+      auto a = new model::cuda::cupti::callback::Api(
+          model::sys::get_thread_id(), cbdata);
+
+      // save api pointer so it can be accessed by exit callback
+      cbdata->correlationData = reinterpret_cast<uint64_t *>(a);
 
       // profiler::driver().this_thread().api_enter(a);
     }
@@ -890,7 +891,7 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
       break;
     default:
       profiler::log() << "DEBU: ( tid= " << model::sys::get_thread_id()
-                      << " ) skipping runtime call " << cbInfo->functionName
+                      << " ) skipping runtime call " << cbdata->functionName
                       << std::endl;
       break;
     }
@@ -914,7 +915,7 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
       break;
     default:
       profiler::log() << "DEBU: ( tid= " << model::sys::get_thread_id()
-                      << " ) skipping driver call " << cbInfo->functionName
+                      << " ) skipping driver call " << cbdata->functionName
                       << std::endl;
       break;
     }
@@ -925,7 +926,12 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
 
   if ((domain == CUPTI_CB_DOMAIN_DRIVER_API) ||
       (domain == CUPTI_CB_DOMAIN_RUNTIME_API)) {
-    if (cbInfo->callbackSite == CUPTI_API_EXIT) {
+    if (cbdata->callbackSite == CUPTI_API_EXIT) {
+
+      auto *api = reinterpret_cast<model::cuda::cupti::callback::Api *>(
+          cbdata->correlationData);
+
+      profiler::record(api->to_json());
       // profiler::driver().this_thread().api_exit();
     }
   }
