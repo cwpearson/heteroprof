@@ -816,8 +816,6 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
                                     CUpti_CallbackId cbid,
                                     CUpti_CallbackData *cbdata) {
 
-  profiler::log() << "In CUPTI callback\n";
-
   (void)userdata; // data supplied at subscription
 
   if (!profiler::driver().this_thread().is_cupti_callbacks_enabled()) {
@@ -828,8 +826,8 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
       (domain == CUPTI_CB_DOMAIN_RUNTIME_API)) {
     if (cbdata->callbackSite == CUPTI_API_ENTER) {
 
-      model::cuda::cupti::callback::Api api(model::sys::get_thread_id(),
-                                            cbdata);
+      auto api = new model::cuda::cupti::callback::Api(
+          model::sys::get_thread_id(), cbdata);
       profiler::driver().this_thread().api_enter(api);
     }
   }
@@ -927,8 +925,9 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
       (domain == CUPTI_CB_DOMAIN_RUNTIME_API)) {
     if (cbdata->callbackSite == CUPTI_API_EXIT) {
 
-      auto &api = profiler::driver().this_thread().current_api();
-      profiler::record(api.to_json());
+      auto api = profiler::driver().this_thread().current_api();
+
+      profiler::record(api->to_json());
       profiler::driver().this_thread().api_exit();
     }
   }

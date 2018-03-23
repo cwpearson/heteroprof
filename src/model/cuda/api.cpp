@@ -11,7 +11,7 @@ Api::Api(const tid_t callingThread, const std::string &name)
 
 json Api::to_json() const {
   json j;
-  j["name"] = name_;
+  j["nameo"] = name_;
   j["calling_tid"] = callingThread_;
   return j;
 }

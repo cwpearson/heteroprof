@@ -58,7 +58,7 @@ public:
 
   int device() const { return device_; }
 
-  virtual json to_json() const;
+  virtual json to_json() const override;
 
   const time_point_t &wall_end() const { return wallEnd_; }
   const time_point_t &wall_start() const { return wallStart_; }

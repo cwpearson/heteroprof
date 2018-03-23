@@ -34,7 +34,7 @@ private:
   std::vector<CUcontext> contextStack_;
 
   ConfiguredCall configuredCall_;
-  std::vector<Api> apiStack_;
+  std::vector<Api *> apiStack_;
 
 public:
   ThreadState() : currentDevice_(0), cuptiCallbacksEnabled_(true) {}
@@ -42,12 +42,12 @@ public:
   int current_device() const { return currentDevice_; }
   void set_device(const int device) { currentDevice_ = device; }
 
-  void api_enter(const Api &a);
-  Api api_exit();
+  void api_enter(Api *a);
+  Api *api_exit();
 
   bool in_child_api() const { return apiStack_.size() >= 2; }
-  const model::cuda::Api &parent_api() const;
-  model::cuda::Api &current_api();
+  const model::cuda::Api *parent_api() const;
+  model::cuda::Api *current_api();
 
   void pause_cupti_callbacks();
   void resume_cupti_callbacks();

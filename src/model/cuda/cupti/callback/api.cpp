@@ -35,7 +35,6 @@ uint64_t Api::wall_end_ns() const {}
 json Api::to_json() const {
 
   json j = model::cuda::Api::to_json();
-
   j["api"]["device"] = device_;
   j["api"]["symbolname"] = kernelName_;
   j["api"]["args"] = json(args_);
