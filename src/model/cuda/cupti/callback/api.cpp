@@ -2,10 +2,18 @@
 
 #include <nlohmann/json.hpp>
 
+#include "model/cuda/api.hpp"
 #include "model/cuda/cupti/callback/api.hpp"
+#include "model/sys/thread.hpp"
 
 using json = nlohmann::json;
 using namespace model::cuda::cupti::callback;
+using tid_t = model::sys::tid_t;
+
+Api::Api(const tid_t callingThread, const CUpti_CallbackData *cbdata)
+    : model::cuda::Api(callingThread, cbdata->functionName) {
+  name_ = cbdata->functionName;
+}
 
 void Api::add_kv(const std::string &k, const std::string &v) { kv_[k] = v; }
 void Api::add_kv(const std::string &k, const size_t &v) {
@@ -25,8 +33,9 @@ uint64_t Api::wall_start_ns() const {}
 uint64_t Api::wall_end_ns() const {}
 
 json Api::to_json() const {
-  json j;
-  j["api"]["name"] = apiName_;
+
+  json j = model::cuda::Api::to_json();
+
   j["api"]["device"] = device_;
   j["api"]["symbolname"] = kernelName_;
   j["api"]["args"] = json(args_);

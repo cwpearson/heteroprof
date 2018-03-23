@@ -29,7 +29,7 @@ endif
 
 CPROF_LIB=$(CPROF_ROOT)/lib
 INC += -isystem$(CPROF_ROOT)/include -isystem$(CPROF_ROOT)/external/include
-LIB += -L$(CPROF_LIB) -lcprof -Wl,-rpath=$(CPROF_LIB)
+LIB += -lnuma
 
 # Set CUDA-related variables
 ifndef CUDA_ROOT

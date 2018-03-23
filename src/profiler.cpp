@@ -73,9 +73,9 @@ Profiler::Profiler() {
   cupti_activity_config::add_activity_handler(activityHander);
 
   // disable preloads
-  preload_nccl::set_passthrough(true);
-  preload_cublas::set_passthrough(true);
-  preload_cudnn::set_passthrough(true);
+  // preload_nccl::set_passthrough(true);
+  // preload_cublas::set_passthrough(true);
+  // preload_cudnn::set_passthrough(true);
 
   // Enable CUPTI Activity API
   auto cuptiActivityKinds = std::vector<CUpti_ActivityKind>{

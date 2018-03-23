@@ -4,18 +4,29 @@
 #include <fstream>
 #include <iostream>
 
+void Logger::enable_out(const bool enable) { outEnabled_ = enable; }
+void Logger::enable_err(const bool enable) { errEnabled_ = enable; }
+
 std::ostream &Logger::out() {
-  if (out_) {
-    return *out_;
+  if (outEnabled_) {
+    if (out_) {
+      return *out_;
+    } else {
+      return std::cout;
+    }
   } else {
-    return std::cout;
+    return nullStream_;
   }
 }
 std::ostream &Logger::err() {
-  if (err_)
-    return *err_;
-  else
-    return std::cerr;
+  if (errEnabled_) {
+    if (err_)
+      return *err_;
+    else
+      return std::cerr;
+  } else {
+    return nullStream_;
+  }
 }
 
 std::ostream &Logger::set_err_path(const std::string &path) {
@@ -29,11 +40,15 @@ std::ostream &Logger::set_out_path(const std::string &path) {
 }
 
 void Logger::atomic_out(const std::string &s) {
-  std::lock_guard<std::mutex> guard(outMutex_);
-  out() << s;
+  if (outEnabled_) {
+    std::lock_guard<std::mutex> guard(outMutex_);
+    out() << s;
+  }
 }
 
 void Logger::atomic_err(const std::string &s) {
-  std::lock_guard<std::mutex> guard(errMutex_);
-  err() << s;
+  if (errEnabled_) {
+    std::lock_guard<std::mutex> guard(errMutex_);
+    err() << s;
+  }
 }

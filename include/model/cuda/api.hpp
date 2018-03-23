@@ -3,13 +3,26 @@
 
 #include <string>
 
+#include "nlohmann/json.hpp"
+
+#include "model/sys/thread.hpp"
+
 namespace model {
 namespace cuda {
 
 class Api {
+  using tid_t = model::sys::tid_t;
+  using json = nlohmann::json;
+
 public:
-private:
-  std::string symbolName_;
+  Api(const tid_t callingThread, const std::string &name);
+
+  json to_json() const;
+  const std::string &name() const;
+
+protected:
+  std::string name_;
+  tid_t callingThread_;
 };
 
 } // namespace cuda
