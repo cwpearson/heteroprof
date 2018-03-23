@@ -1,3 +1,4 @@
+#include <cuda.h>
 #include <cuda_runtime.h>
 
 #include "model/cuda/hardware.hpp"
@@ -7,13 +8,10 @@
 using namespace model::cuda;
 
 void Hardware::get_device_properties() {
-  static bool done = false;
-  if (done)
-    return;
-
-  done = true;
 
   int numDevices;
+
+  logging::err() << "INFO: counting!\n";
   CUDA_CHECK(cudaGetDeviceCount(&numDevices), logging::err());
   logging::err() << "INFO: scanning " << numDevices << " cuda devices\n";
   for (int i = 0; i < numDevices; ++i) {

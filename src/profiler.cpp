@@ -99,18 +99,25 @@ Profiler::Profiler() {
       log() << "INFO: enabled cuptiActivityKind " << kind << std::endl;
     }
   }
+
   log() << "INFO: done enabling activity API" << std::endl;
   log() << "INFO: registering activity callbacks" << std::endl;
   CUPTI_CHECK(cuptiActivityRegisterCallbacks(cuptiActivityBufferRequested,
                                              cuptiActivityBufferCompleted),
               log());
   log() << "INFO: done registering activity callbacks" << std::endl;
+
   // Enable CUPTI Callback API
   log() << "INFO: CuptiSubscriber enabling callback API" << std::endl;
   CUPTI_CHECK(cuptiSubscribe(&cuptiCallbackSubscriber_,
                              (CUpti_CallbackFunc)cuptiCallbackFunction,
                              nullptr),
               log());
+
+  log() << "INFO: scanning devices" << std::endl;
+  hardware_.get_device_properties();
+  log() << "INFO: done" << std::endl;
+
   CUPTI_CHECK(cuptiEnableDomain(1, cuptiCallbackSubscriber_,
                                 CUPTI_CB_DOMAIN_RUNTIME_API),
               log());
@@ -118,10 +125,6 @@ Profiler::Profiler() {
                                 CUPTI_CB_DOMAIN_DRIVER_API),
               log());
   log() << "INFO: done enabling callback API domains" << std::endl;
-
-  log() << "INFO: scanning devices" << std::endl;
-  hardware_.get_device_properties();
-  log() << "INFO: done" << std::endl;
 }
 
 Profiler::~Profiler() {
