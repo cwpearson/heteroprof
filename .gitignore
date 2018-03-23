@@ -1,0 +1,17 @@
+*.o
+*.d
+*.so
+*.pyc
+
+*.pdf
+
+docs/
+build/
+deps/
+
+Makefile.config
+
+.vscode/*
+
+.DS_Store
+._.DS_Store
