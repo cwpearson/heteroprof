@@ -14,7 +14,7 @@ void Hardware::get_device_properties() {
   done = true;
 
   int numDevices;
-  cudaGetDeviceCount(&numDevices);
+  CUDA_CHECK(cudaGetDeviceCount(&numDevices), logging::err());
   logging::err() << "INFO: scanning " << numDevices << " cuda devices\n";
   for (int i = 0; i < numDevices; ++i) {
     cudaDeviceProp prop;

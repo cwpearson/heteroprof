@@ -78,18 +78,15 @@ Profiler::Profiler() {
   // preload_cudnn::set_passthrough(true);
 
   // Enable CUPTI Activity API
+  // CUPTI_ACTIVITY_KIND_GLOBAL_ACCESS causes nccl hang on minsky2
   auto cuptiActivityKinds = std::vector<CUpti_ActivityKind>{
-      CUPTI_ACTIVITY_KIND_KERNEL, CUPTI_ACTIVITY_KIND_MEMCPY,
-      CUPTI_ACTIVITY_KIND_ENVIRONMENT, // not compatible on minsky2
-      CUPTI_ACTIVITY_KIND_CUDA_EVENT,  // FIXME:available before cuda9?
-      CUPTI_ACTIVITY_KIND_DRIVER, CUPTI_ACTIVITY_KIND_RUNTIME,
-      CUPTI_ACTIVITY_KIND_SYNCHRONIZATION,
-      // CUPTI_ACTIVITY_KIND_GLOBAL_ACCESS, // causes a hang in nccl on
-      // minsky2
-      CUPTI_ACTIVITY_KIND_OVERHEAD};
-  log() << "INFO: Profiler enabling activity API" << std::endl;
+      CUPTI_ACTIVITY_KIND_KERNEL,          CUPTI_ACTIVITY_KIND_MEMCPY,
+      CUPTI_ACTIVITY_KIND_ENVIRONMENT,     CUPTI_ACTIVITY_KIND_CUDA_EVENT,
+      CUPTI_ACTIVITY_KIND_DRIVER,          CUPTI_ACTIVITY_KIND_RUNTIME,
+      CUPTI_ACTIVITY_KIND_SYNCHRONIZATION, CUPTI_ACTIVITY_KIND_OVERHEAD};
+  log() << "INFO: enabling activity API" << std::endl;
   for (const auto &kind : cuptiActivityKinds) {
-    log() << "DEBU: Enabling cuptiActivityKind " << kind << std::endl;
+
     CUptiResult code = cuptiActivityEnable(kind);
     if (code == CUPTI_ERROR_NOT_COMPATIBLE) {
       log() << "WARN: CUPTI_ERROR_NOT_COMPATIBLE when enabling " << kind
@@ -99,12 +96,15 @@ Profiler::Profiler() {
             << std::endl;
     } else {
       CUPTI_CHECK(code, log());
+      log() << "INFO: enabled cuptiActivityKind " << kind << std::endl;
     }
   }
+  log() << "INFO: done enabling activity API" << std::endl;
+  log() << "INFO: registering activity callbacks" << std::endl;
   CUPTI_CHECK(cuptiActivityRegisterCallbacks(cuptiActivityBufferRequested,
                                              cuptiActivityBufferCompleted),
               log());
-
+  log() << "INFO: done registering activity callbacks" << std::endl;
   // Enable CUPTI Callback API
   log() << "INFO: CuptiSubscriber enabling callback API" << std::endl;
   CUPTI_CHECK(cuptiSubscribe(&cuptiCallbackSubscriber_,
