@@ -1,13 +1,9 @@
 addons:
   apt:
     packages:
-    - libboost-dev
     - libnuma-dev
-    - libcurl4-openssl-dev
     - git
-    - cmake
     - make
-    - libpthread-stubs0-dev
 sudo: required
 services: docker
 env:
@@ -18,12 +14,6 @@ env:
   - CUDA_ROOT=$HOME/cuda
   - CUDASDK_URL="https://developer.nvidia.com/compute/cuda/8.0/Prod2/local_installers/cuda_8.0.61_375.26_linux-run"
   - CUDASDK_PATH="cudasdk.run"
-  - OPENTRACING_SRC=$HOME/opentracing-cpp
-  - OPENTRACING_ROOT=$HOME/opentracing
-  - OPENTRACING_INCLUDE=$OPENTRACING_ROOT/include
-  - ZIPKIN_SRC=$HOME/zipkin-cpp-opentracing
-  - ZIPKIN_ROOT=$HOME/zipkin
-  - ZIPKIN_INCLUDE=$ZIPKIN_ROOT/include
   - NCCL_SRC=$HOME/nccl
   - NCCL_PREFIX=$HOME/nccl
   
@@ -37,15 +27,6 @@ before_install:
 - travis_retry sudo apt-get -qq update
 - travis_retry sudo apt-get install --no-install-suggests --no-install-recommends -y g++-4.9
 install:
-- git clone https://github.com/opentracing/opentracing-cpp.git $OPENTRACING_SRC
-- cd $OPENTRACING_SRC && mkdir .build && cd .build
-- cmake .. -DCMAKE_INSTALL_PREFIX=$OPENTRACING_ROOT -DCMAKE_CXX_COMPILER=g++-4.9
-- make && make install
-- git clone https://github.com/rnburn/zipkin-cpp-opentracing.git $ZIPKIN_SRC
-- cd $ZIPKIN_SRC && mkdir .build && cd .build
-- cmake .. -DCMAKE_INSTALL_PREFIX=$ZIPKIN_ROOT -DOPENTRACING_INCLUDE_DIR=$OPENTRACING_INCLUDE
-  -DOPENTRACING_LIB=$OPENTRACING_ROOT/lib/libopentracing.so
-- make && make install
 - mkdir -vp $CUDA_ROOT
 - wget $CUDASDK_URL -O $CUDASDK_PATH
 - chmod +x $CUDASDK_PATH
@@ -68,23 +49,16 @@ script:
 - echo CXX=g++-4.9 >> Makefile.config
 - echo CUDA_ROOT=$CUDA_ROOT >> Makefile.config
 - echo BUILD_TYPE=$BUILD_TYPE >> Makefile.config
-- cd $TRAVIS_BUILD_DIR/cprof
-- touch Makefile.config
-- cd $TRAVIS_BUILD_DIR/profiler
-- echo OPENTRACING_ROOT=$OPENTRACING_ROOT >> Makefile.config
-- echo ZIPKIN_OPENTRACING_ROOT=$ZIPKIN_ROOT >> Makefile.config
 - cd $TRAVIS_BUILD_DIR
 - make
-- make tests
-# - cd $TRAVIS_BUILD_DIR/cprof
-# - make docker_docs
+- make docker_docs
 after_success:
 - export DEPLOY=dist/amd64
 - export LATEST=$DEPLOY/latest
 - mkdir -pv $LATEST
-- cp -v lib/libcprof.so $LATEST/libcprof.so
+- cp -v lib/libheteroprof.so $LATEST/libheteroprof.so
 - cp -v env.sh $LATEST/env.sh
-- cp -v $TRAVIS_BUILD_DIR/docs/latex/refman.pdf $LATEST/cprof.pdf
+- cp -v $TRAVIS_BUILD_DIR/docs/latex/refman.pdf $LATEST/heteroprof.pdf
 - export COMMIT=$DEPLOY/$TRAVIS_COMMIT
 - mkdir -pv $COMMIT
 - cp -rv $LATEST/* $COMMIT/.
@@ -97,7 +71,7 @@ deploy:
   access_key_id: GOOGEQY5LDVKHTFZ6AQJ
   secret_access_key:
     secure: PlTpBD2n9702BjgwHkYWpIu51SLcr0ru5Rfba9eSV10175gdB45H3Y5sslwGuyX3ihTDsR4i28kp9eiFLuLajzG22ndtT/MjjLJlsOUcdroF4z3HkZqklncbjH+18x6yxc1uTWsxEMl3gFjpVaBsMviPdVTkK9WBzcPmydpQYD91QX3woJmYMc5O6DYfkvDYk3s6T2rnb8M71Hi88RzLayMGpETYfSEZzlhEhO7T3nm/pN1CwpAEjjKLCvIQF1+h6Klz6f+eloQPbbnTICwlkfyVVgBtpuZuXtsUZbpH+zvE2+7xRaauxpMxR+jSQrDUlEdzG+sY6uLqwgjR9IBiPGDGvtI2sHCyP893VQKS/5tcYorKr3ZGFJ9KDdsJw7YlJ0n4JklJnN+MJ5sCLYXmA3+deFZ9G9WTJ3umB/vLGAuITnE6Q5qTvC7E8Ou9/6fWYYZfXWngSRBY0i32nAffMDZ6hHkYJokIwDhFMgUHjbNKIwqZyOVD9TDBj8bXiZcTDgg9lcglpPb2BKdYBwEtntLnIEo7HrNAvtsZYYrz8s8u6Hxag+6d8Etj7BMaOoXhtO5lQ+y51Yn+2VtK5KCH0Y6pftZLCg2CrVPp0biEZ/iBoGgZq4PHf1FpiNyQIR81D/EFTMVgiIDmoQ+RfrUrLp5awHGYI9R0jl3uOEAvg7g=
-  bucket: cwpearson-cprof
+  bucket: cwpearson-heteroprof
   skip_cleanup: true
   local_dir: $DEPLOY
   on:
