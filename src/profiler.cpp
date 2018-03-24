@@ -17,7 +17,6 @@ using model::cuda::Hardware;
 using nlohmann::json;
 
 namespace profiler {
-Driver &driver() { return Profiler::instance().driver_; }
 Hardware &hardware() { return Profiler::instance().hardware_; }
 
 void record(const std::string &s) { Profiler::instance().record(s); }
@@ -148,6 +147,8 @@ Profiler &Profiler::instance() {
   static Profiler p;
   return p;
 }
+
+Driver &Profiler::driver() { return driver_; }
 
 bool isInitialized = false;
 std::mutex initOnce;

@@ -15,9 +15,7 @@
 #include "cupti_activity.hpp"
 
 namespace profiler {
-using model::cuda::Driver;
 using model::cuda::Hardware;
-Driver &driver();
 Hardware &hardware();
 
 std::ostream &log();
@@ -29,7 +27,6 @@ class Profiler {
   using Driver = model::cuda::Driver;
   using Hardware = model::cuda::Hardware;
 
-  friend Driver &profiler::driver();
   friend Hardware &profiler::hardware();
 
 public:
@@ -40,6 +37,8 @@ public:
   std::ostream &log();
   void record(const std::string &s);
   void record(const nlohmann::json &j);
+
+  Driver &driver();
 
 private:
   Profiler();

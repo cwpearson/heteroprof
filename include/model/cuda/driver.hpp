@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <vector>
@@ -28,13 +29,16 @@ class ThreadState {
   using Api = model::cuda::Api;
   using ConfiguredCall = model::cuda::ConfiguredCall;
 
+public:
+  typedef std::shared_ptr<Api> ApiRef;
+
 private:
   int currentDevice_;
   bool cuptiCallbacksEnabled_;
   std::vector<CUcontext> contextStack_;
 
   ConfiguredCall configuredCall_;
-  std::vector<Api *> apiStack_;
+  std::vector<ApiRef> apiStack_;
 
 public:
   ThreadState() : currentDevice_(0), cuptiCallbacksEnabled_(true) {}
@@ -42,12 +46,12 @@ public:
   int current_device() const { return currentDevice_; }
   void set_device(const int device) { currentDevice_ = device; }
 
-  void api_enter(Api *a);
-  Api *api_exit();
+  void api_enter(ApiRef a);
+  ApiRef api_exit();
 
   bool in_child_api() const { return apiStack_.size() >= 2; }
-  const model::cuda::Api *parent_api() const;
-  model::cuda::Api *current_api();
+  const ApiRef parent_api() const;
+  ApiRef current_api();
 
   void pause_cupti_callbacks();
   void resume_cupti_callbacks();

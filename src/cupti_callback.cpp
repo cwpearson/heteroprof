@@ -4,6 +4,7 @@
 #include <cupti.h>
 
 #include "model/cuda/cupti/callback/api.hpp"
+#include "model/cuda/cupti/callback/cuda_configure_call.hpp"
 #include "model/cuda/location.hpp"
 #include "model/cuda/memory.hpp"
 #include "profiler.hpp"
@@ -723,48 +724,45 @@ static void handleCudaSetDevice(const CUpti_CallbackData *cbInfo) {
 }
 #endif
 
-#if false
-static void handleCudaConfigureCall(const CUpti_CallbackData *cbInfo) {
+static void handleCudaConfigureCall(const CUpti_CallbackData *cbInfo,
+                                    Profiler &profiler) {
   if (cbInfo->callbackSite == CUPTI_API_ENTER) {
-    profiler::log() << "INFO: ( tid=" << cprof::model::get_thread_id()
-                    << " ) callback: cudaConfigureCall entry" << std::endl;
 
-    assert(!profiler::driver().this_thread().configured_call().valid_ &&
-           "call is already configured?\n");
+    auto api = profiler.driver().this_thread().current_api();
 
     auto params = ((cudaConfigureCall_v3020_params *)(cbInfo->functionParams));
-    profiler::driver().this_thread().configured_call().gridDim_ =
-        params->gridDim;
-    profiler::driver().this_thread().configured_call().blockDim_ =
-        params->blockDim;
-    profiler::driver().this_thread().configured_call().sharedMem_ =
-        params->sharedMem;
-    profiler::driver().this_thread().configured_call().stream_ = params->stream;
-    profiler::driver().this_thread().configured_call().valid_ = true;
+    auto gridDim = params->gridDim;
+    auto blockDim = params->blockDim;
+    auto sharedMem = params->sharedMem;
+    auto stream = params->stream;
+
+    auto newApi =
+        std::make_shared<model::cuda::cupti::callback::CudaConfigureCall>(
+            *api, gridDim, blockDim, sharedMem, stream);
+
+    profiler.driver().this_thread().current_api() = newApi;
   } else if (cbInfo->callbackSite == CUPTI_API_EXIT) {
   } else {
     assert(0 && "How did we get here?");
   }
 }
-#endif
 
-#if false
-static void handleCudaSetupArgument(const CUpti_CallbackData *cbInfo) {
-  if (cbInfo->callbackSite == CUPTI_API_ENTER) {
-    profiler::log() << "callback: cudaSetupArgument entry (tid="
-                    << cprof::model::get_thread_id() << ")" << std::endl;
+static void handleCudaSetupArgument(const CUpti_CallbackData *cbdata,
+                                    Profiler &profiler) {
+
+  auto api = profiler.driver().this_thread().current_api();
+
+  if (cbdata->callbackSite == CUPTI_API_ENTER) {
     const auto params =
-        ((cudaSetupArgument_v3020_params *)(cbInfo->functionParams));
-
-    assert(profiler::driver().this_thread().configured_call().valid_);
-    profiler::driver().this_thread().configured_call().args_.push_back(
-        params->arg);
-  } else if (cbInfo->callbackSite == CUPTI_API_EXIT) {
+        ((cudaSetupArgument_v3020_params *)(cbdata->functionParams));
+    const void *arg = params->arg;
+    size_t size = params->size;
+    size_t offset = params->offset;
+  } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
   } else {
     assert(0 && "How did we get here?");
   }
 }
-#endif
 
 #if false
 static void handleCudaStreamCreate(const CUpti_CallbackData *cbInfo) {
@@ -818,7 +816,9 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
 
   (void)userdata; // data supplied at subscription
 
-  if (!profiler::driver().this_thread().is_cupti_callbacks_enabled()) {
+  auto &profiler = Profiler::instance();
+
+  if (!profiler.driver().this_thread().is_cupti_callbacks_enabled()) {
     return;
   }
 
@@ -826,9 +826,10 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
       (domain == CUPTI_CB_DOMAIN_RUNTIME_API)) {
     if (cbdata->callbackSite == CUPTI_API_ENTER) {
 
-      auto api = new model::cuda::cupti::callback::Api(
+      auto api = std::make_shared<model::cuda::cupti::callback::Api>(
           model::sys::get_thread_id(), cbdata);
-      profiler::driver().this_thread().api_enter(api);
+      api->set_wall_start(std::chrono::high_resolution_clock::now());
+      profiler.driver().this_thread().api_enter(api);
     }
   }
   // Data is collected for the following APIs
@@ -836,7 +837,7 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
   case CUPTI_CB_DOMAIN_RUNTIME_API: {
     switch (cbid) {
     case CUPTI_RUNTIME_TRACE_CBID_cudaMemcpy_v3020:
-      // handleCudaMemcpy(profiler::allocations(), cbInfo);
+      // handleCudaMemcpy(cbdata, profiler);
       break;
     case CUPTI_RUNTIME_TRACE_CBID_cudaMemcpyAsync_v3020:
       // handleCudaMemcpyAsync(profiler::allocations(), cbInfo);
@@ -845,7 +846,7 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
       // handleCudaMemcpyPeerAsync(profiler::allocations(), cbInfo);
       break;
     case CUPTI_RUNTIME_TRACE_CBID_cudaMalloc_v3020:
-      // handleCudaMalloc(profiler::allocations(), cbInfo);
+      // handleCudaMalloc(cbdata, profiler);
       break;
     case CUPTI_RUNTIME_TRACE_CBID_cudaMallocHost_v3020:
       // handleCudaMallocHost(profiler::allocations(), cbInfo);
@@ -860,16 +861,16 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
       // handleCudaFreeHost(profiler::allocations(), cbInfo);
       break;
     case CUPTI_RUNTIME_TRACE_CBID_cudaConfigureCall_v3020:
-      // handleCudaConfigureCall(cbInfo);
+      handleCudaConfigureCall(cbdata, profiler);
       break;
     case CUPTI_RUNTIME_TRACE_CBID_cudaSetupArgument_v3020:
-      // handleCudaSetupArgument(cbInfo);
+      handleCudaSetupArgument(cbdata, profiler);
       break;
     case CUPTI_RUNTIME_TRACE_CBID_cudaLaunch_v3020:
-      // handleCudaLaunch(userdata, profiler::allocations(), cbInfo);
+      // handleCudaLaunch(cbdata, profiler);
       break;
     case CUPTI_RUNTIME_TRACE_CBID_cudaSetDevice_v3020:
-      // handleCudaSetDevice(cbInfo);
+      // handleCudaSetDevice(cbdata, profiler);
       break;
     case CUPTI_RUNTIME_TRACE_CBID_cudaStreamCreate_v3020:
       // handleCudaStreamCreate(cbInfo);
@@ -925,10 +926,11 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
       (domain == CUPTI_CB_DOMAIN_RUNTIME_API)) {
     if (cbdata->callbackSite == CUPTI_API_EXIT) {
 
-      auto api = profiler::driver().this_thread().current_api();
+      auto api = profiler.driver().this_thread().current_api();
+      api->set_wall_end(std::chrono::high_resolution_clock::now());
 
-      profiler::record(api->to_json());
-      profiler::driver().this_thread().api_exit();
+      profiler.record(api->to_json());
+      profiler.driver().this_thread().api_exit();
     }
   }
 }
