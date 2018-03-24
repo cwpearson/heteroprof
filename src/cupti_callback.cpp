@@ -6,6 +6,7 @@
 #include "model/cuda/cupti/callback/api.hpp"
 #include "model/cuda/cupti/callback/cuda_configure_call.hpp"
 #include "model/cuda/cupti/callback/cuda_malloc.hpp"
+#include "model/cuda/cupti/callback/cuda_set_device.hpp"
 #include "model/cuda/cupti/callback/cuda_setup_argument.hpp"
 #include "model/cuda/location.hpp"
 #include "model/cuda/memory.hpp"
@@ -676,21 +677,6 @@ static void handleCudaFree(Allocations &allocations,
 }
 #endif
 
-#if false
-static void handleCudaSetDevice(const CUpti_CallbackData *cbInfo) {
-  if (cbInfo->callbackSite == CUPTI_API_ENTER) {
-    profiler::log() << "callback: cudaSetDevice entry" << std::endl;
-    auto params = ((cudaSetDevice_v3020_params *)(cbInfo->functionParams));
-    const int device = params->device;
-
-    profiler::driver().this_thread().set_device(device);
-  } else if (cbInfo->callbackSite == CUPTI_API_EXIT) {
-  } else {
-    assert(0 && "How did we get here?");
-  }
-}
-#endif
-
 static void handleCudaConfigureCall(const CUpti_CallbackData *cbdata,
                                     Profiler &profiler) {
   if (cbdata->callbackSite == CUPTI_API_ENTER) {
@@ -741,6 +727,25 @@ static void handleCudaMalloc(const CUpti_CallbackData *cbdata,
 
   } else {
     assert(0 && "how did we get here?");
+  }
+}
+
+static void handleCudaSetDevice(const CUpti_CallbackData *cbdata,
+                                Profiler &profiler) {
+  if (cbdata->callbackSite == CUPTI_API_ENTER) {
+    auto params = ((cudaSetDevice_v3020_params *)(cbdata->functionParams));
+    const int device = params->device;
+
+    auto tid = model::sys::get_thread_id();
+    auto api = std::make_shared<CudaSetDevice>(tid, cbdata, device);
+    auto now = std::chrono::high_resolution_clock::now();
+    api->set_wall_start(now);
+    profiler.driver().this_thread().api_enter(api);
+
+  } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
+    finalize_api(profiler);
+  } else {
+    assert(0 && "How did we get here?");
   }
 }
 
@@ -863,9 +868,9 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
     // case CUPTI_RUNTIME_TRACE_CBID_cudaLaunch_v3020:
     //   handleCudaLaunch(cbdata, profiler);
     //   break;
-    // case CUPTI_RUNTIME_TRACE_CBID_cudaSetDevice_v3020:
-    //   handleCudaSetDevice(cbdata, profiler);
-    //   break;
+    case CUPTI_RUNTIME_TRACE_CBID_cudaSetDevice_v3020:
+      handleCudaSetDevice(cbdata, profiler);
+      break;
     // case CUPTI_RUNTIME_TRACE_CBID_cudaStreamCreate_v3020:
     //   handleCudaStreamCreate(cbInfo);
     //   break;
