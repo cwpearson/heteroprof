@@ -1,6 +1,7 @@
 #ifndef MODEL_CUDA_API_HPP
 #define MODEL_CUDA_API_HPP
 
+#include <atomic>
 #include <chrono>
 #include <string>
 
@@ -21,7 +22,7 @@ protected:
 public:
   Api(const tid_t callingThread, const std::string &name);
 
-  virtual std::string profiler_type() const { return "api"; }
+  virtual size_t id() const { return id_; }
   virtual json to_json() const;
   const std::string &name() const;
 
@@ -34,6 +35,9 @@ public:
   uint64_t wall_end_ns() const;
 
 protected:
+  static std::atomic<size_t> count_;
+  size_t id_;
+
   std::string name_;
   tid_t callingThread_;
 

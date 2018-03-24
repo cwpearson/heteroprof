@@ -8,16 +8,19 @@ namespace cuda {
 using tid_t = model::sys::tid_t;
 using json = nlohmann::json;
 
+std::atomic<size_t> Api::count_(1);
+
 Api::Api(const tid_t callingThread, const std::string &name)
-    : name_(name), callingThread_(callingThread) {}
+    : id_(count_++), name_(name), callingThread_(callingThread) {}
 
 json Api::to_json() const {
   json j;
-  auto &v = j[profiler_type()];
-  v["name"] = name_;
-  v["calling_tid"] = callingThread_;
-  v["wall_start"] = wall_start_ns();
-  v["wall_end"] = wall_end_ns();
+  j["hprof_kind"] = "cupti_callback_api";
+  j["id"] = id_;
+  j["name"] = name_;
+  j["calling_tid"] = callingThread_;
+  j["wall_start"] = wall_start_ns();
+  j["wall_end"] = wall_end_ns();
   return j;
 }
 

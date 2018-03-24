@@ -27,10 +27,11 @@ private:
   cudaStream_t stream_;
 
 public:
-  CudaConfigureCall(const Api &api, const dim3 gridDim, const dim3 blockDim,
+  CudaConfigureCall(const tid_t callingThread, const CUpti_CallbackData *cbdata,
+                    const dim3 gridDim, const dim3 blockDim,
                     const size_t sharedMem, const cudaStream_t stream)
-      : Api(api), gridDim_(gridDim), blockDim_(blockDim), sharedMem_(sharedMem),
-        stream_(stream) {}
+      : Api(callingThread, cbdata), gridDim_(gridDim), blockDim_(blockDim),
+        sharedMem_(sharedMem), stream_(stream) {}
 
   virtual std::string profiler_type() const { return "callback_api"; }
   virtual json to_json() const override;

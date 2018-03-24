@@ -16,10 +16,8 @@ Api::Api(const tid_t callingThread, const CUpti_CallbackData *cbdata)
 
 json Api::to_json() const {
   json j = model::cuda::Api::to_json();
-  auto &v = j[profiler_type()];
-  v["args"] = json(args_);
-  v["context_uid"] = contextUid_;
-  v["correlation_id"] = correlationId_;
-  v["symbol_name"] = symbolName_;
+  j["context_uid"] = contextUid_;
+  j["correlation_id"] = correlationId_;
+  j["symbol_name"] = symbolName_;
   return j;
 }

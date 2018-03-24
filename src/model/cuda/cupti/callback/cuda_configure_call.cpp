@@ -7,15 +7,12 @@ namespace callback {
 
 using json = nlohmann::json;
 
+json to_json(const dim3 &d) { return json{{"x", d.x}, {"y", d.y}, {"z", d.z}}; }
+
 json CudaConfigureCall::to_json() const {
   auto j = Api::to_json();
-  auto &v = j[profiler_type()];
-  v["gridDim.x"] = gridDim_.x;
-  v["gridDim.y"] = gridDim_.y;
-  v["gridDim.z"] = gridDim_.z;
-  v["blockDim.x"] = blockDim_.x;
-  v["blockDim.y"] = blockDim_.y;
-  v["blockDim.z"] = blockDim_.z;
+  j["gridDim"] = model::cuda::cupti::callback::to_json(gridDim_);
+  j["blockDim"] = model::cuda::cupti::callback::to_json(blockDim_);
   return j;
 }
 
