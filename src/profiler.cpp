@@ -11,6 +11,7 @@
 #include "preload_cudnn.hpp"
 #include "preload_nccl.hpp"
 #include "profiler.hpp"
+#include "version.hpp"
 
 using model::cuda::Driver;
 using model::cuda::Hardware;
@@ -124,6 +125,13 @@ Profiler::Profiler() {
                                 CUPTI_CB_DOMAIN_DRIVER_API),
               log());
   log() << "INFO: done enabling callback API domains" << std::endl;
+
+  log() << "INFO: dumping version" << std::endl;
+  json j;
+  j["version"] = version();
+  j["git"] = version_git();
+  j["build"] = version_build();
+  record(j);
 }
 
 Profiler::~Profiler() {
