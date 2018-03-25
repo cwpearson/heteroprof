@@ -48,6 +48,10 @@ install:
 script:
 - cd $TRAVIS_BUILD_DIR
 - echo CXX=g++-4.9 >> Makefile.config
+- echo WITH_CUDA=1 >> Makefile.config
+- echo WITH_CUDNN=1 >> Makefile.config
+- echo WITH_CUBLAS=1 >> Makefile.config
+- echo WITH_NCCL=1 >> Makefile.config
 - echo CUDA_ROOT=$CUDA_ROOT >> Makefile.config
 - echo BUILD_TYPE=$BUILD_TYPE >> Makefile.config
 - cd $TRAVIS_BUILD_DIR
