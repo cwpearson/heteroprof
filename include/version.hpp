@@ -4,8 +4,8 @@
 #include <string>
 
 std::string version_full();
-std::string version();
-std::string version_build();
-std::string version_git();
+const char *version();
+const char *version_build();
+const char *version_git();
 
 #endif

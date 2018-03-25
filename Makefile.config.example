@@ -5,8 +5,21 @@
 # Set the build type
 BUILD_TYPE ?= Debug
 
+# With CUDA support
+WITH_CUDA = 1
+
 # Where CUDA is
 CUDA_ROOT = /usr/local/cuda
+
+# With CUDNN support
+WITH_CUDNN = 1
+
+# With CUBLAS support
+WITH_CUBLAS = 1
+
+# With NCCL support
+WITH_NCCL = 1
+NCCL_VERSION_MAJOR = 2
 
 ####
 # Optional Configuration
@@ -15,9 +28,6 @@ CUDA_ROOT = /usr/local/cuda
 # Set the compiler and linker
 #CXX = g++
 #LD = ld
-
-# If boost is in an usual place
-#BOOST_ROOT = 
 
 # If libnuma is in an unusual place
 #NUMA_ROOT =

@@ -21,13 +21,19 @@ DEPS = $(CPP_DEPS)
 
 BUILD_DATE := \"$(shell date -u +%Y%m%d-%H%M%S%z)\"
 ifeq ($(strip $(shell git status --porcelain 2>/dev/null)),)
-	GIT_TREE_STATE=clean
+	GIT_TREE_STATE=\"clean\"
 else
-	GIT_TREE_STATE=dirty
+	GIT_TREE_STATE=\"dirty\"
 endif
 
 INC += -Iinclude -isystemthirdparty/include
 LIB += -L$(LIBDIR)
+DEFS += -DWITH_CUDA=$(WITH_CUDA) \
+        -DWITH_CUDNN=$(WITH_CUDNN) \
+		-DWITH_CUBLAS=$(WITH_CUBLAS) \
+		-DWITH_NCCL=$(WITH_NCCL) \
+		-DGIT_DIRTY="$(GIT_TREE_STATE)" \
+		-DBUILD_DATE="$(BUILD_DATE)"
 
 ifdef BOOST_ROOT
   BOOST_INC=$(BOOST_ROOT)/include
@@ -48,7 +54,7 @@ LIB += -ldl \
        -L$(CUDA_ROOT)/extras/CUPTI/lib64 -lcupti -Wl,-rpath=$(CUDA_ROOT)/extras/CUPTI/lib64 \
        -L$(CUDA_ROOT)/lib64 -lcuda -lcudart -lcudadevrt -lcudnn -L/usr/lib -lnccl
 
-CXXFLAGS += -std=c++11 -Wall -Wextra -Wshadow -Wpedantic -fPIC -pthread -DGIT_DIRTY=$(GIT_TREE_STATE) -DBUILD_DATE=$(BUILD_DATE)
+CXXFLAGS += $(DEFS) -std=c++11 -Wall -Wextra -Wshadow -Wpedantic -fPIC -pthread 
 NVCCFLAGS += -std=c++11 -arch=sm_35 -Xcompiler -Wall,-Wextra,-fPIC
 
 # Release or Debug

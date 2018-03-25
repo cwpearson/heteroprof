@@ -1,16 +1,18 @@
 #include "version.hpp"
 
-const std::string v = "0.1.0";
-const std::string dirty = GIT_DIRTY;
-const std::string buildDate = BUILD_DATE;
+#include <iostream>
+
+const char *v = "0.1.0";
+const char *dirty = GIT_DIRTY;
+const char *buildDate = BUILD_DATE;
 
 std::string version_full() {
-  auto s = v + "-" + GIT_DIRTY + "-" + BUILD_DATE;
+  auto s = v + std::string("-") + GIT_DIRTY + "-" + BUILD_DATE;
   return s;
 }
 
-std::string version() { return v; }
+const char *version() { return v; }
 
-std::string version_git() { return dirty; }
+const char *version_git() { return dirty; }
 
-std::string version_build() { return buildDate; }
+const char *version_build() { return buildDate; }

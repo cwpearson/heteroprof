@@ -7,27 +7,15 @@
 
 #include "nlohmann/json.hpp"
 
-#include "model/cuda/driver.hpp"
-#include "model/cuda/hardware.hpp"
+#include "cuda/cupti/activity/config.hpp"
+#include "cuda/driver.hpp"
+#include "cuda/hardware.hpp"
 #include "util/environment_variable.hpp"
 #include "util/logging.hpp"
 
-#include "cupti_activity.hpp"
-
-namespace profiler {
-using model::cuda::Hardware;
-Hardware &hardware();
-
-std::ostream &log();
-void record(const std::string &s);
-void record(const nlohmann::json &j);
-} // namespace profiler
-
 class Profiler {
-  using Driver = model::cuda::Driver;
-  using Hardware = model::cuda::Hardware;
-
-  friend Hardware &profiler::hardware();
+  using Driver = cuda::Driver;
+  using Hardware = cuda::Hardware;
 
 public:
   ~Profiler();

@@ -1,7 +1,7 @@
-#include "model/cuda/address_space.hpp"
+#include "cuda/address_space.hpp"
 
 using json = nlohmann::json;
-using AddressSpace = model::cuda::AddressSpace;
+using AddressSpace = cuda::AddressSpace;
 
 static std::string to_string(const AddressSpace::Kind &t) {
   switch (t) {

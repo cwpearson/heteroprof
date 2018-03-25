@@ -2,28 +2,21 @@
 #include <fstream>
 #include <iostream>
 
+#include "cuda/cupti/util.hpp"
 #include "util/environment_variable.hpp"
-#include "util_cupti.hpp"
 
-#include "cupti_activity_handler.hpp"
-#include "cupti_callback.hpp"
+#include "cuda/cupti/activity/config.hpp"
+#include "cuda/cupti/callback/callback.hpp"
+#include "cuda/cupti/callback/config.hpp"
+#include "cudnn/preload.hpp"
 #include "preload_cublas.hpp"
-#include "preload_cudnn.hpp"
 #include "preload_nccl.hpp"
 #include "profiler.hpp"
 #include "version.hpp"
 
-using model::cuda::Driver;
-using model::cuda::Hardware;
+using cuda::Driver;
+using cuda::Hardware;
 using nlohmann::json;
-
-namespace profiler {
-Hardware &hardware() { return Profiler::instance().hardware_; }
-
-void record(const std::string &s) { Profiler::instance().record(s); }
-void record(const json &j) { Profiler::instance().record(j); }
-std::ostream &log() { return Profiler::instance().log(); }
-} // namespace profiler
 
 /*! \brief Profiler() create a profiler
  *
@@ -45,37 +38,33 @@ Profiler::Profiler() {
     logging::set_err_path(errPath.c_str());
   }
 
+  cuda::cupti::callback::config::set_profiler(*this);
+  cuda::cupti::activity::config::set_profiler(*this);
+
   {
     auto n = EnvironmentVariable<uint32_t>("CPROF_CUPTI_DEVICE_BUFFER_SIZE", 0)
                  .get();
     if (n != 0) {
-      cupti_activity_config::set_device_buffer_size(n);
+      cuda::cupti::activity::config::set_device_buffer_size(n);
     }
     log() << "INFO: CUpti activity device buffer size: "
-          << *cupti_activity_config::attr_device_buffer_size() << std::endl;
+          << *cuda::cupti::activity::config::attr_device_buffer_size()
+          << std::endl;
   }
-
   // Set CUPTI parameters
   CUPTI_CHECK(cuptiActivitySetAttribute(
                   CUPTI_ACTIVITY_ATTR_DEVICE_BUFFER_SIZE,
-                  cupti_activity_config::attr_value_size(
+                  cuda::cupti::activity::config::attr_value_size(
                       CUPTI_ACTIVITY_ATTR_DEVICE_BUFFER_SIZE),
-                  cupti_activity_config::attr_device_buffer_size()),
+                  cuda::cupti::activity::config::attr_device_buffer_size()),
               log());
-  CUPTI_CHECK(cuptiActivitySetAttribute(
-                  CUPTI_ACTIVITY_ATTR_DEVICE_BUFFER_POOL_LIMIT,
-                  cupti_activity_config::attr_value_size(
-                      CUPTI_ACTIVITY_ATTR_DEVICE_BUFFER_POOL_LIMIT),
-                  cupti_activity_config::attr_device_buffer_pool_limit()),
-              log());
-
-  // Set handler functions
-  cupti_activity_config::add_activity_handler(activityHander);
-
-  // disable preloads
-  // preload_nccl::set_passthrough(true);
-  // preload_cublas::set_passthrough(true);
-  // preload_cudnn::set_passthrough(true);
+  CUPTI_CHECK(
+      cuptiActivitySetAttribute(
+          CUPTI_ACTIVITY_ATTR_DEVICE_BUFFER_POOL_LIMIT,
+          cuda::cupti::activity::config::attr_value_size(
+              CUPTI_ACTIVITY_ATTR_DEVICE_BUFFER_POOL_LIMIT),
+          cuda::cupti::activity::config::attr_device_buffer_pool_limit()),
+      log());
 
   // Enable CUPTI Activity API
   // CUPTI_ACTIVITY_KIND_GLOBAL_ACCESS causes nccl hang on minsky2
@@ -126,7 +115,14 @@ Profiler::Profiler() {
               log());
   log() << "INFO: done enabling callback API domains" << std::endl;
 
+  if (WITH_CUDNN) {
+    cudnn::set_profiler(*this);
+  }
+
   log() << "INFO: dumping version" << std::endl;
+  log() << version() << std::endl;
+  log() << version_git() << std::endl;
+  log() << version_build() << std::endl;
   json j;
   j["version"] = version();
   j["git"] = version_git();
@@ -151,12 +147,12 @@ void Profiler::record(const json &j) {
   return logging::atomic_out(j.dump() + "\n");
 }
 
+Driver &Profiler::driver() { return driver_; }
+
 Profiler &Profiler::instance() {
   static Profiler p;
   return p;
 }
-
-Driver &Profiler::driver() { return driver_; }
 
 bool isInitialized = false;
 std::mutex initOnce;
