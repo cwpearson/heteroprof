@@ -19,7 +19,7 @@ CPP_OBJECTS = $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(CPP_SRCS))
 CPP_DEPS=$(patsubst $(BUILDDIR)/%.o,$(DEPSDIR)/%.d,$(CPP_OBJECTS))
 DEPS = $(CPP_DEPS)
 
-BUILD_DATE = \"$(shell date +%Y%m%d-%H%M%S)\"
+BUILD_DATE := \"$(shell date -u +%Y%m%d-%H%M%S%z)\"
 ifeq ($(strip $(shell git status --porcelain 2>/dev/null)),)
 	GIT_TREE_STATE=clean
 else
