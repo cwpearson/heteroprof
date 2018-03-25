@@ -38,6 +38,7 @@ install:
 - rm -v $CUDASDK_PATH
 - wget $CUDNN_URL -O $CUDNN_PATH
 - tar -xvf $CUDNN_PATH
+- rm $CUDNN_PATH
 - mv -v cuda/include/* $CUDA_ROOT/include/.
 - mv -v cuda/lib64/* $CUDA_ROOT/lib64/.
 - git clone https://github.com/NVIDIA/nccl.git $NCCL_SRC
