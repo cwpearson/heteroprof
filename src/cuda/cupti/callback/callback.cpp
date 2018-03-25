@@ -6,13 +6,16 @@
 #include "cuda/cupti/callback/api.hpp"
 #include "cuda/cupti/callback/callback.hpp"
 #include "cuda/cupti/callback/config.hpp"
+#include "cuda/location.hpp"
+#include "cuda/memory.hpp"
+#include "profiler.hpp"
+
+// supported APIs
 #include "cuda/cupti/callback/cuda_configure_call.hpp"
 #include "cuda/cupti/callback/cuda_malloc.hpp"
 #include "cuda/cupti/callback/cuda_set_device.hpp"
 #include "cuda/cupti/callback/cuda_setup_argument.hpp"
-#include "cuda/location.hpp"
-#include "cuda/memory.hpp"
-#include "profiler.hpp"
+#include "cuda/cupti/callback/cuda_stream_create.hpp"
 
 using cuda::Location;
 using cuda::Memory;
@@ -727,6 +730,8 @@ static void handleCudaMalloc(const CUpti_CallbackData *cbdata,
       cm->set_wall_end(std::chrono::high_resolution_clock::now());
       profiler.record(cm->to_json());
       profiler.driver().this_thread().api_exit();
+    } else {
+      assert(0 && "expected CudaMalloc");
     }
 
   } else {
@@ -777,20 +782,34 @@ static void handleCudaSetupArgument(const CUpti_CallbackData *cbdata,
   }
 }
 
-#if false
-static void handleCudaStreamCreate(const CUpti_CallbackData *cbInfo) {
-  if (cbInfo->callbackSite == CUPTI_API_ENTER) {
-  } else if (cbInfo->callbackSite == CUPTI_API_EXIT) {
-    profiler::log() << "INFO: callback: cudaStreamCreate entry" << std::endl;
-    // const auto params =
-    //     ((cudaStreamCreate_v3020_params *)(cbInfo->functionParams));
-    // const cudaStream_t stream = *(params->pStream);
-    profiler::log() << "WARN: ignoring cudaStreamCreate" << std::endl;
+static void handleCudaStreamCreate(const CUpti_CallbackData *cbdata,
+                                   Profiler &profiler) {
+  if (cbdata->callbackSite == CUPTI_API_ENTER) {
+
+    auto tid = get_thread_id();
+    auto api = std::make_shared<CudaStreamCreate>(tid, cbdata);
+    auto now = std::chrono::high_resolution_clock::now();
+    api->set_wall_start(now);
+    profiler.driver().this_thread().api_enter(api);
+  } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
+    auto api = profiler.driver().this_thread().current_api();
+    if (auto csc = std::dynamic_pointer_cast<CudaStreamCreate>(api)) {
+      const auto params =
+          ((cudaStreamCreate_v3020_params *)(cbdata->functionParams));
+      const cudaStream_t stream = *(params->pStream);
+
+      csc->set_stream(stream);
+      csc->set_wall_end(std::chrono::high_resolution_clock::now());
+      profiler.record(csc->to_json());
+      profiler.driver().this_thread().api_exit();
+    } else {
+      assert(0 && "expected CudaMalloc");
+    }
+
   } else {
     assert(0 && "How did we get here?");
   }
 }
-#endif
 
 #if false
 static void handleCudaStreamDestroy(const CUpti_CallbackData *cbInfo) {

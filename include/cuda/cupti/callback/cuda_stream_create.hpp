@@ -1,7 +1,5 @@
-#ifndef CUDA_SET_DEVICE_HPP
-#define CUDA_SET_DEVICE_HPP
-
-#include <cupti.h>
+#ifndef CUDA_STREAM_CREATE_HPP
+#define CUDA_STREAM_CREATE_HPP
 
 #include "nlohmann/json.hpp"
 
@@ -11,17 +9,18 @@ namespace cuda {
 namespace cupti {
 namespace callback {
 
-class CudaSetDevice : public cuda::cupti::callback::Api {
+class CudaStreamCreate : public cuda::cupti::callback::Api {
   using json = nlohmann::json;
   using Api = cuda::cupti::callback::Api;
   using tid_t = sys::tid_t;
 
 private:
-  const int device_;
+  cudaStream_t stream_;
 
 public:
-  CudaSetDevice(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-                const int device);
+  CudaStreamCreate(const tid_t callingThread, const CUpti_CallbackData *cbdata);
+
+  void set_stream(const cudaStream_t stream);
 
   virtual json to_json() const override;
 };

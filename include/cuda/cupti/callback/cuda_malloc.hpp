@@ -1,10 +1,6 @@
 #ifndef CUDA_MALLOC_HPP
 #define CUDA_MALLOC_HPP
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include <cupti.h>
 
 #include "nlohmann/json.hpp"

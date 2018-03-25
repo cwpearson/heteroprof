@@ -1,10 +1,6 @@
 #ifndef CUDA_SETUP_ARGUMENT_HPP
 #define CUDA_SETUP_ARGUMENT_HPP
 
-#include <map>
-#include <string>
-#include <vector>
-
 #include <cupti.h>
 
 #include "nlohmann/json.hpp"

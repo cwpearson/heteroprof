@@ -1,9 +1,7 @@
 #ifndef API_HPP
 #define API_HPP
 
-#include <map>
 #include <string>
-#include <vector>
 
 #include <cupti.h>
 
