@@ -50,6 +50,7 @@ script:
 - echo CUDA_ROOT=$CUDA_ROOT >> Makefile.config
 - echo BUILD_TYPE=$BUILD_TYPE >> Makefile.config
 - cd $TRAVIS_BUILD_DIR
+- git status --porcelain
 - make
 - make docker_docs
 after_success:
