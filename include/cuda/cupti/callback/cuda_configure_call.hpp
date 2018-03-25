@@ -1,5 +1,5 @@
-#ifndef CUDA_CONFIGURE_CALL_HPP
-#define CUDA_CONFIGURE_CALL_HPP
+#ifndef CUDA_CUPTI_CALLBACK_CUDA_CONFIGURE_CALL_HPP
+#define CUDA_CUPTI_CALLBACK_CUDA_CONFIGURE_CALL_HPP
 
 #include <map>
 #include <string>
@@ -32,7 +32,6 @@ public:
       : Api(callingThread, cbdata), gridDim_(gridDim), blockDim_(blockDim),
         sharedMem_(sharedMem), stream_(stream) {}
 
-  virtual std::string hprof_kind() const override { return "cupti_callback"; }
   virtual json to_json() const override;
 };
 

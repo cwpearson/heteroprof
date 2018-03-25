@@ -26,6 +26,7 @@ public:
   Api(const tid_t callingThread, const CUpti_CallbackData *cbdata);
 
   virtual json to_json() const override;
+  virtual std::string hprof_kind() const override { return "cupti_callback"; }
 };
 
 } // namespace callback
