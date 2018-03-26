@@ -1,7 +1,5 @@
-#ifndef CUDA_CUPTI_CALLBACK_CUDAMALLOC_HPP
-#define CUDA_CUPTI_CALLBACK_CUDAMALLOC_HPP
-
-#include <cupti.h>
+#ifndef CUDA_CUPTI_CALLBACK_HOSTFREE_HPP
+#define CUDA_CUPTI_CALLBACK_HOSTFREE_HPP
 
 #include "nlohmann/json.hpp"
 
@@ -11,20 +9,21 @@ namespace cuda {
 namespace cupti {
 namespace callback {
 
-class CudaMalloc : public cuda::cupti::callback::Api {
+class HostFree : public cuda::cupti::callback::Api {
   using json = nlohmann::json;
   using Api = cuda::cupti::callback::Api;
   using tid_t = sys::tid_t;
 
 private:
-  uintptr_t devPtr_;
-  const size_t size_;
+  uintptr_t ptr_;
 
 public:
-  CudaMalloc(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-             const size_t size);
-
-  void set_devptr(const void *const *devPtr);
+  /*!
+    \param rtFlags Flags from cudaMallocHost.
+    \param drFlags Flags from cuMemHostAlloc.
+  */
+  HostFree(const tid_t callingThread, const CUpti_CallbackData *cbdata,
+           const void *ptr);
 
   virtual json to_json() const override;
 };

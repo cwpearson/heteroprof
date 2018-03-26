@@ -9,12 +9,27 @@ namespace cuda {
 
 class ConfiguredCall {
 public:
-  ConfiguredCall() : valid_(false) {}
-  dim3 gridDim_;
-  dim3 blockDim_;
-  size_t sharedMem_;
-  cudaStream_t stream_;
-  std::vector<uintptr_t> args_;
+  ConfiguredCall() : numArgs_(0), valid_(false) {}
+  void add_arg() { numArgs_ += 1; }
+  size_t num_args() const noexcept {
+    assert(valid_);
+    return numArgs_;
+  }
+
+  void start() noexcept {
+    assert(!valid_);
+    numArgs_ = 0;
+    valid_ = true;
+  }
+
+  void finish() noexcept {
+    assert(valid_);
+    numArgs_ = 0;
+    valid_ = false;
+  }
+
+private:
+  size_t numArgs_;
   bool valid_;
 };
 
