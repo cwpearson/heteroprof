@@ -22,8 +22,7 @@ public:
     \param rtFlags Flags from cudaMallocHost.
     \param drFlags Flags from cuMemHostAlloc.
   */
-  DeviceFree(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-             const void *ptr);
+  DeviceFree(const Api &api, const void *ptr);
 
   virtual json to_json() const override;
 };

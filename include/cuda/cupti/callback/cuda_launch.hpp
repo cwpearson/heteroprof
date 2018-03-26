@@ -37,21 +37,13 @@ public:
 
   CudaLaunchParams() : CudaLaunchParams(0, 0, 0, nullptr) {}
 
-  json to_json() {
-    json j;
-    j["grid_dim"] = json(gridDim_);
-    j["block_dim"] = json(blockDim_);
-    j["args"] = json(args_);
-    j["shared_mem"] = sharedMem_;
-    j["stream"] = stream_;
-    return j;
-  }
+  json to_json() const;
 };
 
 // cudaLaunch
 // cudaLaunchKernel
 // cudaLaunchCooperativeKernel
-// cudaLaunchCOoperativeKernelMultiDevice
+// cudaLaunchCooperativeKernelMultiDevice
 class CudaLaunch : public cuda::cupti::callback::Api {
   using json = nlohmann::json;
   using Api = cuda::cupti::callback::Api;
@@ -61,10 +53,17 @@ private:
   std::vector<CudaLaunchParams> params_;
 
 public:
-  CudaLaunch(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-             const void *func, const std::vector<CudaLaunchParams> &params)
-      : Api(callingThread, cbdata),
-        func_(reinterpret_cast<const uintptr_t>(func)), params_(params) {}
+  CudaLaunch(const Api &api, const void *func,
+             const std::vector<CudaLaunchParams> &params)
+      : Api(api), func_(reinterpret_cast<const uintptr_t>(func)),
+        params_(params) {}
+
+  CudaLaunch(const Api &api, const CUfunction cuFunc,
+             const std::vector<CudaLaunchParams> &params)
+      : Api(api), func_(reinterpret_cast<const uintptr_t>(cuFunc)),
+        params_(params) {
+    static_assert(sizeof(cuFunc) == sizeof(uintptr_t), "uh oh");
+  }
 
   virtual json to_json() const override;
 };
