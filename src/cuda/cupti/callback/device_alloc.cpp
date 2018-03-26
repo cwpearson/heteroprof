@@ -17,7 +17,7 @@ void DeviceAlloc::set_ptr(const void *ptr) {
 
 json DeviceAlloc::to_json() const {
   json j = Api::to_json();
-  j["ptr"] = devPtr_;
+  j["ptr"] = ptr_;
   j["size"] = size_;
   return j;
 }

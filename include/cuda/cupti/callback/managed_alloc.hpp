@@ -1,9 +1,5 @@
-#ifndef CUDA_CUPTI_CALLBACK_DEVICEALLOC_HPP
-#define CUDA_CUPTI_CALLBACK_DEVICEALLOC_HPP
-
-#include <cupti.h>
-
-#include "nlohmann/json.hpp"
+#ifndef CUDA_CUPTI_CALLBACK_MANAGEDALLOC_HPP
+#define CUDA_CUPTI_CALLBACK_MANAGEDALLOC_HPP
 
 #include "cuda/cupti/callback/api.hpp"
 
@@ -11,18 +7,18 @@ namespace cuda {
 namespace cupti {
 namespace callback {
 
-class DeviceAlloc : public cuda::cupti::callback::Api {
+class ManagedAlloc : public cuda::cupti::callback::Api {
   using json = nlohmann::json;
   using Api = cuda::cupti::callback::Api;
-  using tid_t = sys::tid_t;
 
 private:
   uintptr_t ptr_;
   const size_t size_;
+  const bool memAttachGlobal_;
+  const bool memAttachHost_;
 
 public:
-  DeviceAlloc(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-              const size_t size);
+  ManagedAlloc(const Api &a, const size_t size, const unsigned int flags);
 
   void set_ptr(const void *ptr);
 
