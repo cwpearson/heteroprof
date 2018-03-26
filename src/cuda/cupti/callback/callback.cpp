@@ -1,4 +1,5 @@
 #include <cassert>
+#include <iostream>
 
 #include <cuda_runtime_api.h>
 #include <cupti.h>
@@ -501,34 +502,47 @@ static void handleCuLaunchKernel(const CUpti_CallbackData *cbdata,
   void **kernelParams = params->kernelParams;
   void **extra = params->extra;
 
-  if (cbdata->callbackSite == CUPTI_API_ENTER) {
-
-    auto numArgs = profiler.driver().this_thread().configured_call().num_args();
-
-    // Look for args in extra field
-    for (auto *p = reinterpret_cast<unsigned char *>(extra[0]);
-         (p != NULL) && (p != CU_LAUNCH_PARAM_END); p += sizeof(void *)) {
-      assert(0 && "Unimplemented: need to know arg sizes (from PTX?)");
+  // Look for args in extra field
+  void *extraParamBuffer = nullptr;
+  size_t extraParamBufferSize = 0;
+  for (size_t i = 0; (extra[i] != NULL) && (extra[i] != CU_LAUNCH_PARAM_END);
+       ++i) {
+    if (CU_LAUNCH_PARAM_BUFFER_POINTER == extra[i]) {
+      extraParamBuffer = extra[++i];
+    } else if (CU_LAUNCH_PARAM_BUFFER_SIZE == extra[i]) {
+      extraParamBufferSize = *reinterpret_cast<size_t *>(extra[++i]);
+    } else {
+      assert(0 && "how did we get here");
     }
+  }
 
-    std::vector<uintptr_t> launchArgs(numArgs);
-    for (size_t i = 0; i < numArgs; ++i) {
-      launchArgs[i] = reinterpret_cast<uintptr_t>(kernelParams[i]);
-    }
-
-    const dim3 gridDim(gridDimX, gridDimY, gridDimZ);
-    const dim3 blockDim(blockDimX, blockDimY, blockDimZ);
-    std::vector<CudaLaunchParams> launchParams;
-    launchParams.push_back(CudaLaunchParams(gridDim, blockDim, launchArgs,
-                                            sharedMemBytes, hStream));
-    auto api = make_api_this_thread_now(cbdata);
-    auto cl = std::make_shared<CudaLaunch>(api, f, launchParams);
-    profiler.driver().this_thread().api_enter(cl);
-  } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
-    profiler.driver().this_thread().configured_call().finish();
-    finalize_api(profiler);
+  if (extraParamBuffer) {
+    profiler.log() << "WARN: not recording kernel args" << std::endl;
   } else {
-    assert(0 && "How did we get here?");
+    if (cbdata->callbackSite == CUPTI_API_ENTER) {
+
+      auto numArgs =
+          profiler.driver().this_thread().configured_call().num_args();
+
+      std::vector<uintptr_t> launchArgs(numArgs);
+      for (size_t i = 0; i < numArgs; ++i) {
+        launchArgs[i] = reinterpret_cast<uintptr_t>(kernelParams[i]);
+      }
+
+      const dim3 gridDim(gridDimX, gridDimY, gridDimZ);
+      const dim3 blockDim(blockDimX, blockDimY, blockDimZ);
+      std::vector<CudaLaunchParams> launchParams;
+      launchParams.push_back(CudaLaunchParams(gridDim, blockDim, launchArgs,
+                                              sharedMemBytes, hStream));
+      auto api = make_api_this_thread_now(cbdata);
+      auto cl = std::make_shared<CudaLaunch>(api, f, launchParams);
+      profiler.driver().this_thread().api_enter(cl);
+    } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
+      profiler.driver().this_thread().configured_call().finish();
+      finalize_api(profiler);
+    } else {
+      assert(0 && "How did we get here?");
+    }
   }
 }
 
