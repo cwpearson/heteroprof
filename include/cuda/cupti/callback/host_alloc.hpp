@@ -27,8 +27,7 @@ public:
     \param rtFlags Flags from cudaMallocHost.
     \param drFlags Flags from cuMemHostAlloc.
   */
-  HostAlloc(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-            const size_t size, const unsigned int rtFlags,
+  HostAlloc(const Api &api, const size_t size, const unsigned int rtFlags,
             const unsigned int drFlags);
 
   void set_ptr(const void *ptr);

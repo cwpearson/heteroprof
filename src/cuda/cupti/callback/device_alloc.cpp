@@ -7,9 +7,8 @@ namespace callback {
 using json = nlohmann::json;
 using tid_t = sys::tid_t;
 
-DeviceAlloc::DeviceAlloc(const tid_t callingThread,
-                         const CUpti_CallbackData *cbdata, const size_t size)
-    : Api(callingThread, cbdata), ptr_(0), size_(size) {}
+DeviceAlloc::DeviceAlloc(const Api &api, const size_t size)
+    : Api(api), ptr_(0), size_(size) {}
 
 void DeviceAlloc::set_ptr(const void *ptr) {
   ptr_ = reinterpret_cast<uintptr_t>(ptr);

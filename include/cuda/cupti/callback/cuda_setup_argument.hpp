@@ -1,9 +1,5 @@
-#ifndef CUDA_SETUP_ARGUMENT_HPP
-#define CUDA_SETUP_ARGUMENT_HPP
-
-#include <cupti.h>
-
-#include "nlohmann/json.hpp"
+#ifndef CUDA_CUPTI_CALLBACK_CUDASETUPARGUMENT_HPP
+#define CUDA_CUPTI_CALLBACK_CUDASETUPARGUMENT_HPP
 
 #include "cuda/cupti/callback/api.hpp"
 
@@ -22,8 +18,8 @@ private:
   const size_t offset_; ///< offset in argument stack to push new argument
 
 public:
-  CudaSetupArgument(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-                    const void *arg, const size_t size, const size_t offset);
+  CudaSetupArgument(const Api &api, const void *arg, const size_t size,
+                    const size_t offset);
 
   virtual json to_json() const override;
 };

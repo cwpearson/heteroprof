@@ -20,8 +20,7 @@ private:
   const int device_;
 
 public:
-  CudaSetDevice(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-                const int device);
+  CudaSetDevice(const Api &api, const int device);
 
   virtual json to_json() const override;
 };

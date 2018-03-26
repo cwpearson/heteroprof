@@ -21,8 +21,7 @@ private:
   const size_t size_;
 
 public:
-  DeviceAlloc(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-              const size_t size);
+  DeviceAlloc(const Api &api, const size_t size);
 
   void set_ptr(const void *ptr);
 

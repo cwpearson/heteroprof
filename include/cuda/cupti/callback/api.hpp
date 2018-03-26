@@ -16,17 +16,24 @@ namespace callback {
 class Api : public cuda::Api {
   using json = nlohmann::json;
 
+public:
+  typedef unsigned short domain_t;
+  using tid_t = sys::tid_t;
+
 private:
-  uint32_t contextUid_;
-  uint32_t correlationId_;
+  const uint32_t contextUid_;
+  const uint32_t correlationId_;
   std::string symbolName_;
+  const domain_t domain_;
 
 public:
-  using tid_t = sys::tid_t;
-  Api(const tid_t callingThread, const CUpti_CallbackData *cbdata);
+  Api(const tid_t callingThread, const CUpti_CallbackData *cbdata,
+      const CUpti_CallbackDomain domain);
 
   virtual json to_json() const override;
   virtual std::string hprof_kind() const override { return "cupti_callback"; }
+
+  domain_t domain() const noexcept { return domain_; }
 };
 
 } // namespace callback

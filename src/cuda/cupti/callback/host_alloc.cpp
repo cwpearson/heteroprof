@@ -7,10 +7,9 @@ namespace callback {
 using json = nlohmann::json;
 using tid_t = sys::tid_t;
 
-HostAlloc::HostAlloc(const tid_t callingThread,
-                     const CUpti_CallbackData *cbdata, const size_t bytesize,
+HostAlloc::HostAlloc(const Api &api, const size_t bytesize,
                      const unsigned int rtFlags, const unsigned int drFlags)
-    : Api(callingThread, cbdata), size_(bytesize), ptr_(0) {
+    : Api(api), size_(bytesize), ptr_(0) {
   portable_ = drFlags & CU_MEMHOSTALLOC_PORTABLE;
   devicemap_ = drFlags & CU_MEMHOSTALLOC_DEVICEMAP;
   writecombined_ = drFlags & CU_MEMHOSTALLOC_WRITECOMBINED;

@@ -48,7 +48,7 @@ public:
   void api_enter(ApiRef a);
   ApiRef api_exit();
 
-  bool in_child_api() const { return apiStack_.size() >= 2; }
+  size_t api_stack_size() const { return apiStack_.size(); }
   const ApiRef parent_api() const;
   ApiRef current_api();
 

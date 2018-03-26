@@ -18,7 +18,7 @@ private:
   cudaStream_t stream_;
 
 public:
-  CudaStreamCreate(const tid_t callingThread, const CUpti_CallbackData *cbdata);
+  CudaStreamCreate(const Api &api);
 
   void set_stream(const cudaStream_t stream);
 

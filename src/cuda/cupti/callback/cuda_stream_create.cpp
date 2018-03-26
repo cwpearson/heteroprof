@@ -7,9 +7,7 @@ namespace callback {
 using json = nlohmann::json;
 using tid_t = sys::tid_t;
 
-CudaStreamCreate::CudaStreamCreate(const tid_t callingThread,
-                                   const CUpti_CallbackData *cbdata)
-    : Api(callingThread, cbdata) {}
+CudaStreamCreate::CudaStreamCreate(const Api &api) : Api(api), stream_(0) {}
 
 void CudaStreamCreate::set_stream(const cudaStream_t stream) {
   stream_ = stream;

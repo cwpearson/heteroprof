@@ -12,8 +12,12 @@ namespace cupti {
 namespace callback {
 namespace config {
 
+/* !brief set Profiler instance used by CUPTI callbacks
+ */
 void set_profiler(Profiler &p);
 Profiler &profiler();
+
+void set_record_nested_runtime(const bool enable);
 
 } // namespace config
 } // namespace callback
