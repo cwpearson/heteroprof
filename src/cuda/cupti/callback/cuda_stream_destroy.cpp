@@ -5,20 +5,18 @@ namespace cupti {
 namespace callback {
 
 using json = nlohmann::json;
-using tid_t = sys::tid_t;
 
-CudaStreamDestory::CudaStreamDestory(const tid_t callingThread,
-                                     const CUpti_CallbackData *cbdata,
-                                     const cudaStream_t stream);
-    : Api(callingThread, cbdata), stream_(stream) {
+CudaStreamDestroy::CudaStreamDestroy(const Api &api, const cudaStream_t stream)
+    : Api(api), stream_(reinterpret_cast<uintptr_t>(stream)) {
+  static_assert(sizeof(uintptr_t) == sizeof(stream), "uh oh");
 }
 
-    json CudaStreamDestory::to_json() const {
-      json j = Api::to_json();
-      j["stream"] = stream_;
-      return j;
-    }
+json CudaStreamDestroy::to_json() const {
+  json j = Api::to_json();
+  j["stream"] = stream_;
+  return j;
+}
 
-    } // namespace callback
-    } // namespace cupti
-    } // namespace cuda
+} // namespace callback
+} // namespace cupti
+} // namespace cuda

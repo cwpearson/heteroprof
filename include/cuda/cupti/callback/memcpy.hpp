@@ -13,8 +13,8 @@ class Memcpy : public cuda::cupti::callback::Api {
   using tid_t = sys::tid_t;
 
 protected:
-  const uintptr_t src_;
   const uintptr_t dst_;
+  const uintptr_t src_;
   const size_t count_;
   cudaMemcpyKind kind_;
 
@@ -31,7 +31,7 @@ class MemcpyAsync : public Memcpy {
   using tid_t = sys::tid_t;
 
 private:
-  uint64_t stream_;
+  uintptr_t stream_;
 
 public:
   MemcpyAsync(const Memcpy &m, const cudaStream_t stream);

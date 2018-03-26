@@ -13,11 +13,10 @@ class CudaStreamDestroy : public cuda::cupti::callback::Api {
   using tid_t = sys::tid_t;
 
 private:
-  cudaStream_t stream_;
+  const uintptr_t stream_;
 
 public:
-  CudaStreamDestroy(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-                    const cudaStream_t stream);
+  CudaStreamDestroy(const Api &api, const cudaStream_t stream);
 
   virtual json to_json() const override;
 };

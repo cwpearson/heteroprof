@@ -71,7 +71,7 @@ static void handleCudaFreeHost(const CUpti_CallbackData *cbdata,
     auto params = ((cudaFreeHost_v3020_params *)(cbdata->functionParams));
     const void *ptr = params->ptr;
 
-    auto api = make_api_this_thread_now(cbdata);
+    const auto api = make_api_this_thread_now(cbdata);
     auto hf = std::make_shared<HostFree>(api, ptr);
     profiler.driver().this_thread().api_enter(hf);
   } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
@@ -384,12 +384,10 @@ static void handleCuCtxSetCurrent(const CUpti_CallbackData *cbdata,
   const CUcontext ctx = params->ctx;
 
   if (cbdata->callbackSite == CUPTI_API_ENTER) {
-    auto now = std::chrono::high_resolution_clock::now();
-    auto tid = get_thread_id();
+    auto api = make_api_this_thread_now(cbdata);
 
-    auto api = std::make_shared<CuCtxSetCurrent>(tid, cbdata, ctx);
-    api->set_wall_start(now);
-    profiler.driver().this_thread().api_enter(api);
+    auto ccsc = std::make_shared<CuCtxSetCurrent>(api, ctx);
+    profiler.driver().this_thread().api_enter(ccsc);
 
   } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
     finalize_api(profiler);
@@ -477,11 +475,9 @@ static void handleCudaStreamDestroy(const CUpti_CallbackData *cbdata,
         reinterpret_cast<const PARAM_TYPE *>(cbdata->functionParams);
     const cudaStream_t stream = params->stream;
 
-    auto tid = get_thread_id();
-    auto api = std::make_shared<CudaStreamDestroy>(tid, cbdata, stream);
-    auto now = std::chrono::high_resolution_clock::now();
-    api->set_wall_start(now);
-    profiler.driver().this_thread().api_enter(api);
+    auto api = make_api_this_thread_now(cbdata);
+    auto csd = std::make_shared<CudaStreamDestroy>(api, stream);
+    profiler.driver().this_thread().api_enter(csd);
   } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
     finalize_api(profiler);
   } else {

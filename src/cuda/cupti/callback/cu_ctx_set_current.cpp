@@ -5,12 +5,11 @@ namespace cupti {
 namespace callback {
 
 using json = nlohmann::json;
-using tid_t = sys::tid_t;
 
-CuCtxSetCurrent::CuCtxSetCurrent(const tid_t callingThread,
-                                 const CUpti_CallbackData *cbdata,
-                                 const CUcontext ctx)
-    : Api(callingThread, cbdata), ctx_(ctx) {}
+CuCtxSetCurrent::CuCtxSetCurrent(const Api &api, const CUcontext ctx)
+    : Api(api), ctx_(reinterpret_cast<uintptr_t>(ctx)) {
+  static_assert(sizeof(uintptr_t) == sizeof(ctx), "uh oh");
+}
 
 json CuCtxSetCurrent::to_json() const {
   json j = Api::to_json();

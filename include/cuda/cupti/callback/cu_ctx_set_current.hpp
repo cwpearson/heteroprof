@@ -1,10 +1,6 @@
 #ifndef CUDA_CUPTI_CALLBACK_CUCTXSETCURRENT_HPP
 #define CUDA_CUPTI_CALLBACK_CUCTXSETCURRENT_HPP
 
-#include <cupti.h>
-
-#include "nlohmann/json.hpp"
-
 #include "cuda/cupti/callback/api.hpp"
 
 namespace cuda {
@@ -17,11 +13,10 @@ class CuCtxSetCurrent : public cuda::cupti::callback::Api {
   using tid_t = sys::tid_t;
 
 private:
-  const CUcontext ctx_;
+  const uintptr_t ctx_;
 
 public:
-  CuCtxSetCurrent(const tid_t callingThread, const CUpti_CallbackData *cbdata,
-                  const CUcontext ctx);
+  CuCtxSetCurrent(const Api &api, const CUcontext ctx);
 
   virtual json to_json() const override;
 };
