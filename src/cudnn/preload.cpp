@@ -7,12 +7,35 @@
 #include "cudnn/preload.hpp"
 #include "cudnn/util.hpp"
 
+//Include classes for different functions
+#include "cudnn/cudnn_create.hpp"
+#include "cudnn/cudnn_destroy.hpp"
+#include "cudnn/cudnn_activation_forward.hpp"
+#include "cudnn/cudnn_add_tensor.hpp"
+#include "cudnn/cudnn_activation_backward.hpp"
+
 namespace cudnn {
+using sys::get_thread_id;    
 Profiler *profiler_ = nullptr;
 void set_profiler(Profiler &p) { profiler_ = &p; }
 Profiler &profiler() {
   assert(profiler_);
   return *profiler_;
+}
+
+Cudnn make_cudnn_this_thread_now(std::string name) {
+  auto now = std::chrono::high_resolution_clock::now();
+  auto tid = get_thread_id();
+  Cudnn cudnn(tid, name);
+  cudnn.set_wall_start(now);
+  return cudnn;
+}
+
+void finalize_api(Profiler &p){
+    auto api = p.driver().this_thread().current_api();
+    api->set_wall_end(std::chrono::high_resolution_clock::now());
+    p.record(api->to_json());
+    p.driver().this_thread().api_exit(); 
 }
 } // namespace cudnn
 
@@ -36,67 +59,54 @@ size_t tensorSize(const cudnnTensorDescriptor_t tensorDesc) {
   }                                                                            \
   assert(real_##name && "Will the real " #name " please stand up?");
 
+
+
+
 typedef cudnnStatus_t (*cudnnCreateFunc)(cudnnHandle_t *handle);
 extern "C" cudnnStatus_t cudnnCreate(cudnnHandle_t *handle) {
   CUDNN_DLSYM_BOILERPLATE(cudnnCreate);
 
-  auto api = std::make_shared<Cudnn>(get_thread_id(), "cudnnCreate");
+  auto a = make_cudnn_this_thread_now("cudnnCreate");
+  auto api = std::make_shared<CudnnCreate>(a, handle);
 
-  profiler().log() << "WARN: tid " << get_thread_id()
-                   << " disabling CUPTI callbacks during cudnnCreate call"
-                   << std::endl;
+//Disable this for now
+//   profiler().log() << "WARN: tid " << get_thread_id()
+//                    << " disabling CUPTI callbacks during cudnnCreate call"
+//                    << std::endl;
 
-  profiler().driver().this_thread().pause_cupti_callbacks();
+//   profiler().driver().this_thread().pause_cupti_callbacks();
+
+  profiler().driver().this_thread().api_enter(api);
+  profiler().driver().this_thread().configured_call().start();  
 
   const cudnnStatus_t ret = real_cudnnCreate(handle);
+  finalize_api(profiler());
   return ret;
 }
 
-#if false
-
-#include "preload_cudnn.hpp"
-
-#include "cprof/allocations.hpp"
-#include "cprof/model/driver.hpp"
-#include "cprof/model/thread.hpp"
-
-#include "cudnn_util.hpp"
-#include "profiler.hpp"
-
-namespace preload_cudnn {
-bool passthrough = false;
-bool is_passthrough() { return passthrough; }
-void set_passthrough(const bool b) { passthrough = b; }
-} // namespace preload_cudnn
-
-
-
-template <typename FN, typename... Args>
-cudnnStatus_t call_and_set_time(ApiRecordRef api, FN function, Args... args) {
-  const auto start = cprof::now();
-  const cudnnStatus_t ret = function(args...);
-  api->set_wall_time(start, cprof::now());
-  return ret;
-}
-#endif
-
-#if false
 typedef cudnnStatus_t (*cudnnDestroyFunc)(cudnnHandle_t handle);
 extern "C" cudnnStatus_t cudnnDestroy(cudnnHandle_t handle) {
   CUDNN_DLSYM_BOILERPLATE(cudnnDestroy);
 
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnDestroy(handle);
-  }
+//Disable this for now
+//   if (preload_cudnn::is_passthrough()) {
+//     return real_cudnnDestroy(handle);
+//   }
+//   profiler::err() << "WARN: disabling CUPTI callbacks during cudnnDestroy call"
+//                   << std::endl;
+//   profiler::driver().this_thread().pause_cupti_callbacks();
+//   profiler::driver().this_thread().resume_cupti_callbacks();
 
-  profiler::err() << "WARN: disabling CUPTI callbacks during cudnnDestroy call"
-                  << std::endl;
-  profiler::driver().this_thread().pause_cupti_callbacks();
+  auto a = make_cudnn_this_thread_now("cudnnDestroy");
+  auto api = std::make_shared<CudnnDestroy>(a, handle);
+  profiler().driver().this_thread().api_enter(api);
+  profiler().driver().this_thread().configured_call().start();  
 
   const cudnnStatus_t ret = real_cudnnDestroy(handle);
-  profiler::driver().this_thread().resume_cupti_callbacks();
+  finalize_api(profiler());
   return ret;
 }
+
 
 typedef cudnnStatus_t (*cudnnActivationForwardFunc)(
     cudnnHandle_t handle, cudnnActivationDescriptor_t activationDesc,
@@ -110,40 +120,46 @@ extern "C" cudnnStatus_t cudnnActivationForward(
 
   CUDNN_DLSYM_BOILERPLATE(cudnnActivationForward);
 
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnActivationForward(handle, activationDesc, alpha, xDesc, x,
-                                       beta, yDesc, y);
-  }
-
-  auto &allocations = profiler::allocations();
-
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
-
+//Disabled for now
+//   if (preload_cudnn::is_passthrough()) {
+//     return real_cudnnActivationForward(handle, activationDesc, alpha, xDesc, x,
+//                                        beta, yDesc, y);
+//   }
+//   auto &allocations = profiler::allocations();
+//   const int devId = profiler::driver().device_from_cudnn_handle(handle);
+//   AddressSpace AS = profiler::hardware().address_space(devId);
   // Get src value
-  auto xVal = allocations.find_value((uintptr_t)x, AS);
-  assert(xVal && "x should be on device");
-
+//   auto xVal = allocations.find_value((uintptr_t)x, AS);
+//   assert(xVal && "x should be on device");
   // Get dst allocation
-  auto yAlloc = allocations.find((uintptr_t)y, AS);
-  assert(yAlloc && "y alloc should be on device");
-  auto api = std::make_shared<ApiRecord>("cudnnActivationForward", devId);
-
+//   auto yAlloc = allocations.find((uintptr_t)y, AS);
+//   assert(yAlloc && "y alloc should be on device");
+//   auto api = std::make_shared<ApiRecord>("cudnnActivationForward", devId);
   // FIXME - also depends on alpha, beta
-  auto yVal = yAlloc.new_value((uintptr_t)y, tensorSize(yDesc), true);
+//   auto yVal = yAlloc.new_value((uintptr_t)y, tensorSize(yDesc), true);
+//   profiler::err()
+//       << "WARN: disabling CUPTI callbacks during cudnnActivationForward call"
+//       << std::endl;
+//   profiler::driver().this_thread().pause_cupti_callbacks();
+    auto a = make_cudnn_this_thread_now("cudnnActivationForward");
+    auto api = std::make_shared<CudnnActivationForward>(a, handle, activationDesc, 
+                                                        alpha, xDesc, x, beta,
+                                                        yDesc, y);
+    profiler().driver().this_thread().api_enter(api);
+    profiler().driver().this_thread().configured_call().start();  
 
-  profiler::err()
-      << "WARN: disabling CUPTI callbacks during cudnnActivationForward call"
-      << std::endl;
-  profiler::driver().this_thread().pause_cupti_callbacks();
-  const cudnnStatus_t ret =
-      call_and_set_time(api, real_cudnnActivationForward, handle,
-                        activationDesc, alpha, xDesc, x, beta, yDesc, y);
-  profiler::driver().this_thread().resume_cupti_callbacks();
 
-  api->add_output(yVal);
-  api->add_input(xVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+    const cudnnStatus_t ret =real_cudnnActivationForward(handle,
+                                                         activationDesc, 
+                                                         alpha, xDesc, 
+                                                         x, beta, yDesc, y);
+
+    finalize_api(profiler());
+//   profiler::driver().this_thread().resume_cupti_callbacks();
+
+//   api->add_output(yVal);
+//   api->add_input(xVal);
+//   profiler::atomic_out(api->to_json_string() + "\n");
 
   return ret;
 }
@@ -161,37 +177,38 @@ extern "C" cudnnStatus_t cudnnAddTensor(cudnnHandle_t handle, const void *alpha,
                                         void *C) {
   CUDNN_DLSYM_BOILERPLATE(cudnnAddTensor);
 
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnAddTensor(handle, alpha, aDesc, A, beta, cDesc, C);
-  }
+//Disable for now
+//   if (preload_cudnn::is_passthrough()) {
+//     return real_cudnnAddTensor(handle, alpha, aDesc, A, beta, cDesc, C);
+//   }
+//   // FIXME - alpha and beta
+//   const int devId = profiler::driver().device_from_cudnn_handle(handle);
+//   AddressSpace AS = profiler::hardware().address_space(devId);
+//   auto &allocations = profiler::allocations();
+//   // Get src value
+//   auto aVal = allocations.find_value((uintptr_t)A, 1, AS);
+//   assert(aVal && "A should be on device");
+//   auto cVal = allocations.find_value((uintptr_t)C, 1, AS);
+//   assert(cVal && "C should be on device");
+//   auto api = std::make_shared<ApiRecord>("cudnnAddTensor", devId);
+//   auto dstVal = allocations.duplicate_value(cVal, true);
+//   profiler::err() << "WARN: thread " << cprof::model::get_thread_id()
+//                   << " disabling CUPTI callbacks during cudnnAddTensor call"
+//                   << std::endl;
+//   profiler::driver().this_thread().pause_cupti_callbacks();
+    auto a = make_cudnn_this_thread_now("cudnnAddTensor");
+    auto api = std::make_shared<CudnnAddTensor>(a, handle, alpha, aDesc, A, beta, cDesc, C);
+    profiler().driver().this_thread().api_enter(api);
+    profiler().driver().this_thread().configured_call().start();  
+    const cudnnStatus_t ret = real_cudnnAddTensor(handle, alpha, aDesc, 
+                                                  A, beta, cDesc, C);
 
-  // FIXME - alpha and beta
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
-  auto &allocations = profiler::allocations();
-
-  // Get src value
-  auto aVal = allocations.find_value((uintptr_t)A, 1, AS);
-  assert(aVal && "A should be on device");
-  auto cVal = allocations.find_value((uintptr_t)C, 1, AS);
-  assert(cVal && "C should be on device");
-  auto api = std::make_shared<ApiRecord>("cudnnAddTensor", devId);
-
-  auto dstVal = allocations.duplicate_value(cVal, true);
-
-  profiler::err() << "WARN: thread " << cprof::model::get_thread_id()
-                  << " disabling CUPTI callbacks during cudnnAddTensor call"
-                  << std::endl;
-
-  profiler::driver().this_thread().pause_cupti_callbacks();
-  const cudnnStatus_t ret = call_and_set_time(api, real_cudnnAddTensor, handle,
-                                              alpha, aDesc, A, beta, cDesc, C);
-  profiler::driver().this_thread().resume_cupti_callbacks();
-
-  api->add_output(dstVal);
-  api->add_input(aVal);
-  api->add_input(cVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+    finalize_api(profiler());
+//   profiler::driver().this_thread().resume_cupti_callbacks();
+//   api->add_output(dstVal);
+//   api->add_input(aVal);
+//   api->add_input(cVal);
+//   profiler::atomic_out(api->to_json_string() + "\n");
 
   return ret;
 }
@@ -210,49 +227,59 @@ extern "C" cudnnStatus_t cudnnActivationBackward(
     const cudnnTensorDescriptor_t dxDesc, void *dx) {
 
   CUDNN_DLSYM_BOILERPLATE(cudnnActivationBackward);
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnActivationBackward(handle, activationDesc, alpha, yDesc, y,
-                                        dyDesc, dy, xDesc, x, beta, dxDesc, dx);
-  }
 
-  auto &allocations = profiler::allocations();
+//Disable for now
+//   if (preload_cudnn::is_passthrough()) {
+//     return real_cudnnActivationBackward(handle, activationDesc, alpha, yDesc, y,
+//                                         dyDesc, dy, xDesc, x, beta, dxDesc, dx);
+//   }
+//   auto &allocations = profiler::allocations();
 
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
+//   const int devId = profiler::driver().device_from_cudnn_handle(handle);
+//   AddressSpace AS = profiler::hardware().address_space(devId);
 
   // Get src value
-  auto yVal = allocations.find_value((uintptr_t)y, 1, AS);
-  auto dyVal = allocations.find_value((uintptr_t)dy, 1, AS);
-  auto xVal = allocations.find_value((uintptr_t)x, 1, AS);
-  assert(yVal && "y should be on device");
-  assert(dyVal && "dy should be on device");
-  assert(xVal && "x should be on device");
+//   auto yVal = allocations.find_value((uintptr_t)y, 1, AS);
+//   auto dyVal = allocations.find_value((uintptr_t)dy, 1, AS);
+//   auto xVal = allocations.find_value((uintptr_t)x, 1, AS);
+//   assert(yVal && "y should be on device");
+//   assert(dyVal && "dy should be on device");
+//   assert(xVal && "x should be on device");
 
-  // Get dst allocation
-  auto dxAlloc = allocations.find((uintptr_t)dx, AS);
-  assert(dxAlloc && "dx alloc should be on device");
-  auto api = std::make_shared<ApiRecord>(
-      "cudnnActivationBackward",
-      profiler::driver().device_from_cudnn_handle(handle));
+//   Get dst allocation
+//   auto dxAlloc = allocations.find((uintptr_t)dx, AS);
+//   assert(dxAlloc && "dx alloc should be on device");
+//   auto api = std::make_shared<ApiRecord>(
+    //   "cudnnActivationBackward",
+    //   profiler::driver().device_from_cudnn_handle(handle));
 
-  auto dxVal = dxAlloc.new_value((uintptr_t)dx, tensorSize(dxDesc), true);
+//   auto dxVal = dxAlloc.new_value((uintptr_t)dx, tensorSize(dxDesc), true);
 
-  profiler::err()
-      << "WARN: disabling CUPTI callbacks during cudnnActivationBackward call"
-      << std::endl;
-  profiler::driver().this_thread().pause_cupti_callbacks();
-  const cudnnStatus_t ret = call_and_set_time(
-      api, real_cudnnActivationBackward, handle, activationDesc, alpha, yDesc,
+//   profiler::err()
+    //   << "WARN: disabling CUPTI callbacks during cudnnActivationBackward call"
+    //   << std::endl;
+//   profiler::driver().this_thread().pause_cupti_callbacks();
+
+    auto a = make_cudnn_this_thread_now("cudnnActivationBackward");
+    auto api = std::make_shared<CudnnActivationBackward>(a, handle, activationDesc,
+                                                alpha, yDesc, y,
+                                                dyDesc, dy,
+                                                xDesc, x, beta,
+                                                dxDesc, dx);
+    profiler().driver().this_thread().api_enter(api);
+    profiler().driver().this_thread().configured_call().start();  
+    const cudnnStatus_t ret = real_cudnnActivationBackward(handle, activationDesc, alpha, yDesc,
       y, dyDesc, dy, xDesc, x, beta, dxDesc, dx);
-  profiler::driver().this_thread().resume_cupti_callbacks();
+//   profiler::driver().this_thread().resume_cupti_callbacks();
 
   // FIXME: also depends on alpha, beta
-  api->add_output(dxVal);
-  api->add_input(xVal);
-  api->add_input(yVal);
-  api->add_input(dyVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+//   api->add_output(dxVal);
+//   api->add_input(xVal);
+//   api->add_input(yVal);
+//   api->add_input(dyVal);
+//   profiler::atomic_out(api->to_json_string() + "\n");
 
+  finalize_api(profiler());
   return ret;
 }
 

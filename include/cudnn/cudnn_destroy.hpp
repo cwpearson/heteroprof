@@ -1,5 +1,5 @@
-#ifndef CUDA_CUDNN_CREATE
-#define CUDA_CUDNN_CREATE
+#ifndef CUDA_CUDNN_DESTROY
+#define CUDA_CUDNN_DESTROY
 
 #include "cudnn/api.hpp"
 #include "cudnn/util.hpp"
@@ -7,16 +7,16 @@
 
 namespace cudnn {
 
-class CudnnCreate : public cudnn::Cudnn {
+class CudnnDestroy : public cudnn::Cudnn {
   using json = nlohmann::json;
   using Api = cudnn::Cudnn;
   using tid_t = sys::tid_t;
 
 protected:
-  const cudnnHandle_t *cudnnHandle_;
+  cudnnHandle_t cudnnHandle_;
 
 public:
-  CudnnCreate(const Api &api, const cudnnHandle_t *cudnnHandle);
+  CudnnDestroy(const Api &api, const cudnnHandle_t cudnnHandle);
 
   virtual json to_json() const override;
 };
