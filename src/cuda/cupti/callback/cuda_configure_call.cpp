@@ -10,8 +10,10 @@ json to_json(const dim3 &d) { return json{{"x", d.x}, {"y", d.y}, {"z", d.z}}; }
 
 json CudaConfigureCall::to_json() const {
   auto j = Api::to_json();
-  j["gridDim"] = cuda::cupti::callback::to_json(gridDim_);
-  j["blockDim"] = cuda::cupti::callback::to_json(blockDim_);
+  j["grid_dim"] = cuda::cupti::callback::to_json(gridDim_);
+  j["block_dim"] = cuda::cupti::callback::to_json(blockDim_);
+  j["stream"] = stream_;
+  j["shared_mem"] = sharedMem_;
   return j;
 }
 
