@@ -15,13 +15,15 @@ private:
   dim3 gridDim_;
   dim3 blockDim_;
   size_t sharedMem_;
-  cudaStream_t stream_;
+  uintptr_t stream_;
 
 public:
   CudaConfigureCall(const Api &api, const dim3 gridDim, const dim3 blockDim,
                     const size_t sharedMem, const cudaStream_t stream)
       : Api(api), gridDim_(gridDim), blockDim_(blockDim), sharedMem_(sharedMem),
-        stream_(stream) {}
+        stream_(reinterpret_cast<uintptr_t>(stream)) {
+    static_assert(sizeof(cudaStream_t) == sizeof(uintptr_t), "uh oh");
+  }
 
   virtual json to_json() const override;
 };
