@@ -10,7 +10,7 @@ CudnnSoftmaxForward::CudnnSoftmaxForward(const Api &api, cudnnHandle_t cudnnHand
                                                 const void *alpha, const cudnnTensorDescriptor_t xDesc, const void *x,
                                                 const void *beta, const cudnnTensorDescriptor_t yDesc, void *y)
     : Api(api), cudnnHandle_(cudnnHandle), algo_(algo), mode_(mode),
-      alpha_(alpha), xDesc_(xDesc), x_(x), beta_(beta), yDesc_(yDesc_), y_(y) {}
+      alpha_(alpha), xDesc_(xDesc), x_(x), beta_(beta), yDesc_(yDesc), y_(y) {}
 
 json CudnnSoftmaxForward::to_json() const {
   json j = Api::to_json();

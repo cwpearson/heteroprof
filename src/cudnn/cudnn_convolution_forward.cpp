@@ -14,7 +14,7 @@ CudnnConvolutionForward::CudnnConvolutionForward(const Api &api, cudnnHandle_t c
                                                  size_t workSpaceSizeInBytes, const void *beta,
                                                  const cudnnTensorDescriptor_t yDesc, void *y)
     : Api(api), cudnnHandle_(cudnnHandle), alpha_(alpha), xDesc_(xDesc), x_(x), wDesc_(wDesc), w_(w),
-      convDesc_(convDesc), algo_(algo), workspace_(workSpace), workSpaceSizeInBytes_(workSpaceSizeInBytes_),
+      convDesc_(convDesc), algo_(algo), workspace_(workSpace), workSpaceSizeInBytes_(workSpaceSizeInBytes),
       beta_(beta), yDesc_(yDesc), y_(y) {}
 
 json CudnnConvolutionForward::to_json() const {

@@ -14,7 +14,7 @@ CudnnConvolutionBackwardFilter::CudnnConvolutionBackwardFilter(const Api &api, c
                                                            size_t workSpaceSizeInBytes, const void *beta,
                                                            const cudnnFilterDescriptor_t dwDesc, void *dw)
     : Api(api), cudnnHandle_(cudnnHandle), alpha_(alpha), xDesc_(xDesc), x_(x), dyDesc_(dyDesc), dy_(dy),
-      convDesc_(convDesc_), algo_(algo), workspace_(workSpace), workSpaceSizeInBytes_(workSpaceSizeInBytes),
+      convDesc_(convDesc), algo_(algo), workspace_(workSpace), workSpaceSizeInBytes_(workSpaceSizeInBytes),
       beta_(beta), dwDesc_(dwDesc), dw_(dw) {}
 
 json CudnnConvolutionBackwardFilter::to_json() const {
