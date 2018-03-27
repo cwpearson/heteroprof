@@ -63,8 +63,6 @@ json Transfer::to_json() const {
   j["stream_id"] = streamId_;
   j["correlation_id"] = correlationId_;
   j["runtime_correlation_id"] = runtimeCorrelationId_;
-  j["start"] = start_ns();
-  j["duration"] = dur_ns();
   return j;
 }
 
