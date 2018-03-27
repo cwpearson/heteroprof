@@ -16,7 +16,7 @@ protected:
   const cudnnHandle_t cudnnHandle_;
   cudnnActivationDescriptor_t activationDesc_;
   const void *alpha_;
-  const cudnnDescriptor_t yDesc_;
+  const cudnnTensorDescriptor_t yDesc_;
   const void *y_;
   const cudnnTensorDescriptor_t dyDesc_;
   const void *dy_;

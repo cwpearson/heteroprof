@@ -6,16 +6,16 @@ namespace cudnn {
 
 using json = nlohmann::json;
 
-CudnnActivationForward::CudnnActivationForward(const Api &api, cudnnHandle_t cudnnHandle, cudnnActivationDescriptor_t activationDesc,
+CudnnActivationBackward::CudnnActivationBackward(const Api &api, cudnnHandle_t cudnnHandle, cudnnActivationDescriptor_t activationDesc,
                                                const void *alpha, const cudnnTensorDescriptor_t yDesc, const void *y,
                                                const cudnnTensorDescriptor_t dyDesc, const void *dy,
                                                const cudnnTensorDescriptor_t xDesc, const void *x, const void *beta,
                                                const cudnnTensorDescriptor_t dxDesc, void *dx)
     : Api(api), cudnnHandle_(cudnnHandle), activationDesc_(activationDesc), alpha_(alpha),
       yDesc_(yDesc), y_(y), dyDesc_(dyDesc), dy_(dy), xDesc_(xDesc), x_(x), beta_(beta),
-      dxDesc_(dxDesc), dx_(dx)
+      dxDesc_(dxDesc), dx_(dx) {}
 
-json CudnnCreate::to_json() const {
+json CudnnActivationBackward::to_json() const {
   json j = Api::to_json();
   j["cudnn_handle"] = (uint64_t)cudnnHandle_;
   j["activation_desc"] = (uint64_t)activationDesc_;
@@ -25,10 +25,10 @@ json CudnnCreate::to_json() const {
   j["dy_desc"] = (uint64_t)dyDesc_;
   j["dy"] = (uint64_t)dy_;
   j["x_desc"] = (uint64_t)xDesc_;
-  j["x"] = x_;
-  j["beta"] = beta_;
-  j["dx_desc"] = dxDesc_;
-  j["dx"] = dx_;
+  j["x"] = (uint64_t)x_;
+  j["beta"] = (uint64_t)beta_;
+  j["dx_desc"] = (uint64_t)dxDesc_;
+  j["dx"] = (uint64_t)dx_;
   return j;
 }
 

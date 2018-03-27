@@ -13,6 +13,12 @@
 #include "cudnn/cudnn_activation_forward.hpp"
 #include "cudnn/cudnn_add_tensor.hpp"
 #include "cudnn/cudnn_activation_backward.hpp"
+#include "cudnn/cudnn_convolution_backward_bias.hpp"
+#include "cudnn/cudnn_convolution_backward_filter.hpp"
+#include "cudnn/cudnn_convolution_forward.hpp"
+#include "cudnn/cudnn_pooling_forward.hpp"
+#include "cudnn/cudnn_softmax_forward.hpp"
+#include "cudnn/cudnn_convolution_backward_data.hpp"
 
 namespace cudnn {
 using sys::get_thread_id;    
@@ -297,48 +303,61 @@ extern "C" cudnnStatus_t cudnnConvolutionBackwardData(
     size_t workSpaceSizeInBytes, const void *beta,
     const cudnnTensorDescriptor_t dxDesc, void *dx) {
   CUDNN_DLSYM_BOILERPLATE(cudnnConvolutionBackwardData);
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnConvolutionBackwardData(
-        handle, alpha, wDesc, w, dyDesc, dy, convDesc, algo, workSpace,
-        workSpaceSizeInBytes, beta, dxDesc, dx);
-  }
 
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
-  auto &allocations = profiler::allocations();
+//Disable this for now
+//   if (preload_cudnn::is_passthrough()) {
+//     return real_cudnnConvolutionBackwardData(
+//         handle, alpha, wDesc, w, dyDesc, dy, convDesc, algo, workSpace,
+//         workSpaceSizeInBytes, beta, dxDesc, dx);
+//   }
+
+//   const int devId = profiler::driver().device_from_cudnn_handle(handle);
+//   AddressSpace AS = profiler::hardware().address_space(devId);
+//   auto &allocations = profiler::allocations();
 
   // Find input values
-  auto dyVal = allocations.find_value((uintptr_t)dy, AS);
-  auto wVal = allocations.find_value((uintptr_t)w, AS);
-  auto workSpaceVal = allocations.find_value((uintptr_t)workSpace, AS);
-  auto dxVal = allocations.find_value((uintptr_t)dx, AS);
+//   auto dyVal = allocations.find_value((uintptr_t)dy, AS);
+//   auto wVal = allocations.find_value((uintptr_t)w, AS);
+//   auto workSpaceVal = allocations.find_value((uintptr_t)workSpace, AS);
+//   auto dxVal = allocations.find_value((uintptr_t)dx, AS);
 
-  assert(dyVal &&
-         "Couldn't find cudnnConvolutionBackwardData dy value on device");
-  assert(wVal && workSpaceVal && dxVal);
-  auto api = std::make_shared<ApiRecord>(
-      "cudnnConvolutionBackwardData",
-      profiler::driver().device_from_cudnn_handle(handle));
+//   assert(dyVal &&
+        //  "Couldn't find cudnnConvolutionBackwardData dy value on device");
+//   assert(wVal && workSpaceVal && dxVal);
+//   auto api = std::make_shared<ApiRecord>(
+    //   "cudnnConvolutionBackwardData",
+    //   profiler::driver().device_from_cudnn_handle(handle));
 
   // Create output value
-  auto outVal = allocations.duplicate_value(dxVal, true);
+//   auto outVal = allocations.duplicate_value(dxVal, true);
 
   // Do the actual call
-  profiler::err() << "WARN: disabling CUPTI callbacks during "
-                     "cudnnConvolutionBackwardData call"
-                  << std::endl;
-  profiler::driver().this_thread().pause_cupti_callbacks();
-  const cudnnStatus_t ret = call_and_set_time(
-      api, real_cudnnConvolutionBackwardData, handle, alpha, wDesc, w, dyDesc,
-      dy, convDesc, algo, workSpace, workSpaceSizeInBytes, beta, dxDesc, dx);
-  profiler::driver().this_thread().resume_cupti_callbacks();
+//   profiler::err() << "WARN: disabling CUPTI callbacks during "
+                    //  "cudnnConvolutionBackwardData call"
+                //   << std::endl;
+//   profiler::driver().this_thread().pause_cupti_callbacks();
 
-  api->add_output(outVal);
-  api->add_input(wVal);
-  api->add_input(dyVal);
-  api->add_input(workSpaceVal);
-  api->add_input(dxVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+    auto a = make_cudnn_this_thread_now("cudnnConvolutionBackwardData");
+    auto api = std::make_shared<CudnnConvolutionBackwardData>(a, handle, alpha,
+                                                              wDesc, w,
+                                                              dyDesc, dy,
+                                                              convDesc, algo, workSpace,
+                                                              workSpaceSizeInBytes, beta,
+                                                              dxDesc, dx);
+    profiler().driver().this_thread().api_enter(api);
+    profiler().driver().this_thread().configured_call().start();  
+    const cudnnStatus_t ret = real_cudnnConvolutionBackwardData(handle, alpha, wDesc, w, dyDesc,
+                                                                dy, convDesc, algo, workSpace, 
+                                                                workSpaceSizeInBytes, beta, dxDesc, dx);
+
+  finalize_api(profiler());
+//   profiler::driver().this_thread().resume_cupti_callbacks();
+//   api->add_output(outVal);
+//   api->add_input(wVal);
+//   api->add_input(dyVal);
+//   api->add_input(workSpaceVal);
+//   api->add_input(dxVal);
+//   profiler::atomic_out(api->to_json_string() + "\n");
 
   return ret;
 }
@@ -353,44 +372,56 @@ cudnnConvolutionBackwardBias(cudnnHandle_t handle, const void *alpha,
                              const void *dy, const void *beta,
                              const cudnnTensorDescriptor_t dbDesc, void *db) {
   CUDNN_DLSYM_BOILERPLATE(cudnnConvolutionBackwardBias);
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnConvolutionBackwardBias(handle, alpha, dyDesc, dy, beta,
-                                             dbDesc, db);
-  }
 
-  auto &allocations = profiler::allocations();
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
+//Disabled for now
+//   if (preload_cudnn::is_passthrough()) {
+//     return real_cudnnConvolutionBackwardBias(handle, alpha, dyDesc, dy, beta,
+//                                              dbDesc, db);
+//   }
+//   auto &allocations = profiler::allocations();
+//   const int devId = profiler::driver().device_from_cudnn_handle(handle);
+//   AddressSpace AS = profiler::hardware().address_space(devId);
 
-  // Find input values
-  auto dyVal = allocations.find_value((uintptr_t)dy, AS);
+//   // Find input values
+//   auto dyVal = allocations.find_value((uintptr_t)dy, AS);
 
-  assert(dyVal &&
-         "Couldn't find cudnnConvolutionBackwardBias dy value on device");
+//   assert(dyVal &&
+//          "Couldn't find cudnnConvolutionBackwardBias dy value on device");
 
   // Create output value
-  auto dbAlloc = allocations.find((uintptr_t)db, 1, AS);
-  assert(dbAlloc && "y allocation should be on device");
-  auto api = std::make_shared<ApiRecord>(
-      "cudnnConvolutionBackwardBias",
-      profiler::driver().device_from_cudnn_handle(handle));
-  auto dbVal = dbAlloc.new_value((uintptr_t)db, tensorSize(dbDesc),
-                                 true /*initialized*/);
+//   auto dbAlloc = allocations.find((uintptr_t)db, 1, AS);
+//   assert(dbAlloc && "y allocation should be on device");
+//   auto api = std::make_shared<ApiRecord>(
+//       "cudnnConvolutionBackwardBias",
+//       profiler::driver().device_from_cudnn_handle(handle));
+//   auto dbVal = dbAlloc.new_value((uintptr_t)db, tensorSize(dbDesc),
+//                                  true /*initialized*/);
 
   // Do the actual call
-  profiler::err() << "WARN: disabling CUPTI callbacks during "
-                     "cudnnConvolutionBackwardBias call"
-                  << std::endl;
+//   profiler::err() << "WARN: disabling CUPTI callbacks during "
+//                      "cudnnConvolutionBackwardBias call"
+//                   << std::endl;
 
-  profiler::driver().this_thread().pause_cupti_callbacks();
-  const cudnnStatus_t ret =
-      call_and_set_time(api, real_cudnnConvolutionBackwardBias, handle, alpha,
-                        dyDesc, dy, beta, dbDesc, db);
-  profiler::driver().this_thread().resume_cupti_callbacks();
+//   profiler::driver().this_thread().pause_cupti_callbacks();
 
-  api->add_output(dbVal);
-  api->add_input(dyVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+    auto a = make_cudnn_this_thread_now("cudnnConvolutionBackwardBias");
+    auto api = std::make_shared<CudnnConvolutionBackwardBias>(a, handle, alpha,
+                                                              dyDesc, dy, beta, 
+                                                              dbDesc, db);
+    profiler().driver().this_thread().api_enter(api);
+    profiler().driver().this_thread().configured_call().start();  
+
+    const cudnnStatus_t ret =real_cudnnConvolutionBackwardBias(handle, alpha,
+                                                               dyDesc, dy, beta, 
+                                                               dbDesc, db);
+
+  
+    finalize_api(profiler());
+//   profiler::driver().this_thread().resume_cupti_callbacks();
+
+//   api->add_output(dbVal);
+//   api->add_input(dyVal);
+//   profiler::atomic_out(api->to_json_string() + "\n");
 
   return ret;
 }
@@ -413,50 +444,61 @@ extern "C" cudnnStatus_t cudnnConvolutionBackwardFilter(
     const cudnnFilterDescriptor_t dwDesc, void *dw) {
 
   CUDNN_DLSYM_BOILERPLATE(cudnnConvolutionBackwardFilter);
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnConvolutionBackwardFilter(
-        handle, alpha, xDesc, x, dyDesc, dy, convDesc, algo, workSpace,
-        workSpaceSizeInBytes, beta, dwDesc, dw);
-  }
 
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
-  auto &allocations = profiler::allocations();
+//   if (preload_cudnn::is_passthrough()) {
+//     return real_cudnnConvolutionBackwardFilter(
+//         handle, alpha, xDesc, x, dyDesc, dy, convDesc, algo, workSpace,
+//         workSpaceSizeInBytes, beta, dwDesc, dw);
+//   }
 
-  // Find input values
-  auto xVal = allocations.find_value((uintptr_t)x, AS);
-  auto dyVal = allocations.find_value((uintptr_t)dy, AS);
-  auto workSpaceVal = allocations.find_value((uintptr_t)workSpace, AS);
-  auto dwVal = allocations.find_value((uintptr_t)dw, AS);
-  assert(
-      xVal && dyVal && workSpaceVal && dwVal &&
-      "Couldn't find cudnnConvolutionBackwardFilter argument value on device");
-  auto api = std::make_shared<ApiRecord>(
-      "cudnnConvolutionBackwardFilter",
-      profiler::driver().device_from_cudnn_handle(handle));
+//   const int devId = profiler::driver().device_from_cudnn_handle(handle);
+//   AddressSpace AS = profiler::hardware().address_space(devId);
+//   auto &allocations = profiler::allocations();
 
-  // See if there is an existing output value to take info from
-  auto outVal = allocations.duplicate_value(dwVal, true);
+//   // Find input values
+//   auto xVal = allocations.find_value((uintptr_t)x, AS);
+//   auto dyVal = allocations.find_value((uintptr_t)dy, AS);
+//   auto workSpaceVal = allocations.find_value((uintptr_t)workSpace, AS);
+//   auto dwVal = allocations.find_value((uintptr_t)dw, AS);
+//   assert(
+//       xVal && dyVal && workSpaceVal && dwVal &&
+//       "Couldn't find cudnnConvolutionBackwardFilter argument value on device");
+//   auto api = std::make_shared<ApiRecord>(
+//       "cudnnConvolutionBackwardFilter",
+//       profiler::driver().device_from_cudnn_handle(handle));
 
-  profiler::err() << "[cudnnConvolutionBackwardFilter] " << outVal
-                  << " deps on " << xVal << " " << dyVal << " " << workSpaceVal
-                  << " " << dwVal << std::endl;
+//   // See if there is an existing output value to take info from
+//   auto outVal = allocations.duplicate_value(dwVal, true);
 
-  profiler::err() << "WARN: disabling CUPTI callbacks during "
-                     "cudnnConvolutionBackwardFilter call"
-                  << std::endl;
-  profiler::driver().this_thread().pause_cupti_callbacks();
-  const cudnnStatus_t ret = call_and_set_time(
-      api, real_cudnnConvolutionBackwardFilter, handle, alpha, xDesc, x, dyDesc,
+//   profiler::err() << "[cudnnConvolutionBackwardFilter] " << outVal
+//                   << " deps on " << xVal << " " << dyVal << " " << workSpaceVal
+//                   << " " << dwVal << std::endl;
+
+//   profiler::err() << "WARN: disabling CUPTI callbacks during "
+//                      "cudnnConvolutionBackwardFilter call"
+//                   << std::endl;
+//   profiler::driver().this_thread().pause_cupti_callbacks();
+    auto a = make_cudnn_this_thread_now("cudnnConvolutionBackwardFilter");
+    auto api = std::make_shared<CudnnConvolutionBackwardFilter>(a, handle, alpha,
+                                                                xDesc, x,
+                                                                dyDesc, dy,
+                                                                convDesc, algo, workSpace,
+                                                                workSpaceSizeInBytes, beta,
+                                                                dwDesc, dw);
+    profiler().driver().this_thread().api_enter(api);
+    profiler().driver().this_thread().configured_call().start();  
+
+    const cudnnStatus_t ret = real_cudnnConvolutionBackwardFilter(handle, alpha, xDesc, x, dyDesc,
       dy, convDesc, algo, workSpace, workSpaceSizeInBytes, beta, dwDesc, dw);
-  profiler::driver().this_thread().resume_cupti_callbacks();
+    finalize_api(profiler());
+//   profiler::driver().this_thread().resume_cupti_callbacks();
 
-  api->add_output(outVal);
-  api->add_input(xVal);
-  api->add_input(dyVal);
-  api->add_input(workSpaceVal);
-  api->add_input(dwVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+//   api->add_output(outVal);
+//   api->add_input(xVal);
+//   api->add_input(dyVal);
+//   api->add_input(workSpaceVal);
+//   api->add_input(dwVal);
+//   profiler::atomic_out(api->to_json_string() + "\n");
 
   return ret;
 }
@@ -479,52 +521,67 @@ cudnnConvolutionForward(cudnnHandle_t handle, const void *alpha,
                         const cudnnTensorDescriptor_t yDesc, void *y) {
 
   CUDNN_DLSYM_BOILERPLATE(cudnnConvolutionForward);
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnConvolutionForward(handle, alpha, xDesc, x, wDesc, w,
-                                        convDesc, algo, workSpace,
-                                        workSpaceSizeInBytes, beta, yDesc, y);
-  }
 
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
-  auto &allocations = profiler::allocations();
+//Disable this for now
+//   if (preload_cudnn::is_passthrough()) {
+//     return real_cudnnConvolutionForward(handle, alpha, xDesc, x, wDesc, w,
+//                                         convDesc, algo, workSpace,
+//                                         workSpaceSizeInBytes, beta, yDesc, y);
+//   }
 
-  // Find input values
-  profiler::err() << "Looking for x=" << (uintptr_t)x << ", w=" << (uintptr_t)w
-                  << ", workSpace=" << (uintptr_t)workSpace << std::endl;
-  auto xVal = allocations.find_value((uintptr_t)x, AS);
-  auto wVal = allocations.find_value((uintptr_t)w, AS);
-  auto workSpaceVal = allocations.find_value((uintptr_t)workSpace, AS);
-  auto yVal = allocations.find_value((uintptr_t)y, AS);
-  assert(xVal && wVal && workSpaceVal && yVal &&
-         "Couldn't find cudnnConvolutionForward argument value on device");
-  auto api = std::make_shared<ApiRecord>(
-      "cudnnConvolutionForward",
-      profiler::driver().device_from_cudnn_handle(handle));
+//   const int devId = profiler::driver().device_from_cudnn_handle(handle);
+//   AddressSpace AS = profiler::hardware().address_space(devId);
+//   auto &allocations = profiler::allocations();
 
-  // See if there is an existing output value to take info from
-  auto outVal = allocations.duplicate_value(yVal, true);
+//   // Find input values
+//   profiler::err() << "Looking for x=" << (uintptr_t)x << ", w=" << (uintptr_t)w
+//                   << ", workSpace=" << (uintptr_t)workSpace << std::endl;
+//   auto xVal = allocations.find_value((uintptr_t)x, AS);
+//   auto wVal = allocations.find_value((uintptr_t)w, AS);
+//   auto workSpaceVal = allocations.find_value((uintptr_t)workSpace, AS);
+//   auto yVal = allocations.find_value((uintptr_t)y, AS);
+//   assert(xVal && wVal && workSpaceVal && yVal &&
+//          "Couldn't find cudnnConvolutionForward argument value on device");
+//   auto api = std::make_shared<ApiRecord>(
+//       "cudnnConvolutionForward",
+//       profiler::driver().device_from_cudnn_handle(handle));
 
-  profiler::err() << "[cudnnConvolutionForward] " << outVal << " deps on "
-                  << yVal << " " << xVal << " " << wVal << " " << workSpaceVal
-                  << std::endl;
+//   // See if there is an existing output value to take info from
+//   auto outVal = allocations.duplicate_value(yVal, true);
 
-  profiler::err()
-      << "WARN: thread " << cprof::model::get_thread_id()
-      << " disabling CUPTI callbacks during cudnnConvolutionForward call"
-      << std::endl;
-  profiler::driver().this_thread().pause_cupti_callbacks();
-  const cudnnStatus_t ret = call_and_set_time(
-      api, real_cudnnConvolutionForward, handle, alpha, xDesc, x, wDesc, w,
+//   profiler::err() << "[cudnnConvolutionForward] " << outVal << " deps on "
+//                   << yVal << " " << xVal << " " << wVal << " " << workSpaceVal
+//                   << std::endl;
+//   profiler::err()
+//       << "WARN: thread " << cprof::model::get_thread_id()
+//       << " disabling CUPTI callbacks during cudnnConvolutionForward call"
+//       << std::endl;
+//   profiler::driver().this_thread().pause_cupti_callbacks();
+
+
+  auto a = make_cudnn_this_thread_now("cudnnConvolutionBackwardFilter");
+  auto api = std::make_shared<CudnnConvolutionForward>(a, handle, alpha,
+                                                       xDesc, x,
+                                                       wDesc, w,
+                                                       convDesc,
+                                                       algo, workSpace,
+                                                       workSpaceSizeInBytes, beta,
+                                                       yDesc, y);
+  profiler().driver().this_thread().api_enter(api);
+  profiler().driver().this_thread().configured_call().start();  
+
+  const cudnnStatus_t ret = real_cudnnConvolutionForward(handle, alpha, xDesc, x, wDesc, w,
       convDesc, algo, workSpace, workSpaceSizeInBytes, beta, yDesc, y);
-  profiler::driver().this_thread().resume_cupti_callbacks();
 
-  api->add_output(outVal);
-  api->add_input(xVal);
-  api->add_input(wVal);
-  api->add_input(workSpaceVal);
-  api->add_input(yVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+  finalize_api(profiler());
+  // profiler::driver().this_thread().resume_cupti_callbacks();
+
+  // api->add_output(outVal);
+  // api->add_input(xVal);
+  // api->add_input(wVal);
+  // api->add_input(workSpaceVal);
+  // api->add_input(yVal);
+  // profiler::atomic_out(api->to_json_string() + "\n");
 
   return ret;
 }
@@ -539,42 +596,55 @@ extern "C" cudnnStatus_t cudnnSoftmaxForward(
     const void *beta, const cudnnTensorDescriptor_t yDesc, void *y) {
 
   CUDNN_DLSYM_BOILERPLATE(cudnnSoftmaxForward);
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnSoftmaxForward(handle, algo, mode, alpha, xDesc, x, beta,
-                                    yDesc, y);
-  }
 
-  auto &allocations = profiler::allocations();
+//Disable
+  // if (preload_cudnn::is_passthrough()) {
+  //   return real_cudnnSoftmaxForward(handle, algo, mode, alpha, xDesc, x, beta,
+  //                                   yDesc, y);
+  // }
 
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
+  // auto &allocations = profiler::allocations();
 
-  // Find input values
-  auto xVal = allocations.find_value((uintptr_t)x, AS);
-  assert(xVal && "Couldn't find cudnnSoftmaxForward x value on device");
-  auto api = std::make_shared<ApiRecord>("cudnnSoftmaxForward", devId);
+  // const int devId = profiler::driver().device_from_cudnn_handle(handle);
+  // AddressSpace AS = profiler::hardware().address_space(devId);
 
-  // Create output value
-  auto yAlloc = allocations.find((uintptr_t)y, 1, AS);
-  assert(yAlloc && "y allocation should be on device");
+  // // Find input values
+  // auto xVal = allocations.find_value((uintptr_t)x, AS);
+  // assert(xVal && "Couldn't find cudnnSoftmaxForward x value on device");
+  // auto api = std::make_shared<ApiRecord>("cudnnSoftmaxForward", devId);
 
-  auto yVal =
-      yAlloc.new_value((uintptr_t)y, tensorSize(yDesc), true /*initialized*/);
+  // // Create output value
+  // auto yAlloc = allocations.find((uintptr_t)y, 1, AS);
+  // assert(yAlloc && "y allocation should be on device");
+
+  // auto yVal =
+  //     yAlloc.new_value((uintptr_t)y, tensorSize(yDesc), true /*initialized*/);
 
 
-  // Do the actual call
-  profiler::err()
-      << "WARN: disabling CUPTI callbacks during cudnnSoftmaxForward call"
-      << std::endl;
-  profiler::driver().this_thread().pause_cupti_callbacks();
+  // // Do the actual call
+  // profiler::err()
+  //     << "WARN: disabling CUPTI callbacks during cudnnSoftmaxForward call"
+  //     << std::endl;
+  // profiler::driver().this_thread().pause_cupti_callbacks();
+
+
+  auto a = make_cudnn_this_thread_now("cudnnSoftmaxForward");
+  auto api = std::make_shared<CudnnSoftmaxForward>(a, handle, algo, mode,
+                                                   alpha, xDesc, x,
+                                                   beta, yDesc, y);
+  profiler().driver().this_thread().api_enter(api);
+  profiler().driver().this_thread().configured_call().start();  
+
+
   const cudnnStatus_t ret =
-      call_and_set_time(api, real_cudnnSoftmaxForward, handle, algo, mode,
+      real_cudnnSoftmaxForward(handle, algo, mode,
                         alpha, xDesc, x, beta, yDesc, y);
-  profiler::driver().this_thread().resume_cupti_callbacks();
+  finalize_api(profiler());
+  // profiler::driver().this_thread().resume_cupti_callbacks();
 
-  api->add_output(yVal);
-  api->add_input(xVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+  // api->add_output(yVal);
+  // api->add_input(xVal);
+  // profiler::atomic_out(api->to_json_string() + "\n");
 
   return ret;
 }
@@ -589,43 +659,53 @@ extern "C" cudnnStatus_t cudnnPoolingForward(
     const void *beta, const cudnnTensorDescriptor_t yDesc, void *y) {
 
   CUDNN_DLSYM_BOILERPLATE(cudnnPoolingForward);
-  if (preload_cudnn::is_passthrough()) {
-    return real_cudnnPoolingForward(handle, poolingDesc, alpha, xDesc, x, beta,
-                                    yDesc, y);
-  }
+  // if (preload_cudnn::is_passthrough()) {
+  //   return real_cudnnPoolingForward(handle, poolingDesc, alpha, xDesc, x, beta,
+  //                                   yDesc, y);
+  // }
 
-  auto &allocations = profiler::allocations();
+  // auto &allocations = profiler::allocations();
 
-  const int devId = profiler::driver().device_from_cudnn_handle(handle);
-  AddressSpace AS = profiler::hardware().address_space(devId);
+  // const int devId = profiler::driver().device_from_cudnn_handle(handle);
+  // AddressSpace AS = profiler::hardware().address_space(devId);
 
-  // Find input values
-  auto xVal = allocations.find_value((uintptr_t)x, AS);
-  assert(xVal && "Couldn't find cudnnPoolingForward x value on device");
-  auto api = std::make_shared<ApiRecord>("cudnnPoolingForward", devId);
+  // // Find input values
+  // auto xVal = allocations.find_value((uintptr_t)x, AS);
+  // assert(xVal && "Couldn't find cudnnPoolingForward x value on device");
+  // auto api = std::make_shared<ApiRecord>("cudnnPoolingForward", devId);
 
-  // FIXME: ignoring alpha, beta
+  // // FIXME: ignoring alpha, beta
 
-  // Create output value
-  const size_t ySize = tensorSize(yDesc);
-  auto yAlloc = allocations.find((uintptr_t)y, ySize, AS);
-  assert(yAlloc && "y allocation should be on device");
+  // // Create output value
+  // const size_t ySize = tensorSize(yDesc);
+  // auto yAlloc = allocations.find((uintptr_t)y, ySize, AS);
+  // assert(yAlloc && "y allocation should be on device");
 
-  auto yVal = yAlloc.new_value((uintptr_t)y, ySize, true /*initialized*/);
+  // auto yVal = yAlloc.new_value((uintptr_t)y, ySize, true /*initialized*/);
 
-  // Do the actual call
-  profiler::err()
-      << "WARN: disabling CUPTI callbacks during cudnnPoolingForward call"
-      << std::endl;
-  profiler::driver().this_thread().pause_cupti_callbacks();
+  // // Do the actual call
+  // profiler::err()
+  //     << "WARN: disabling CUPTI callbacks during cudnnPoolingForward call"
+  //     << std::endl;
+  // profiler::driver().this_thread().pause_cupti_callbacks();
+  auto a = make_cudnn_this_thread_now("cudnnSoftmaxForward");
+  auto api = std::make_shared<CudnnPoolingForward>(a, handle, poolingDesc,
+                                                   alpha, xDesc, x,
+                                                   beta, yDesc, y);
+  profiler().driver().this_thread().api_enter(api);
+  profiler().driver().this_thread().configured_call().start();  
+
+
   const cudnnStatus_t ret =
-      call_and_set_time(api, real_cudnnPoolingForward, handle, poolingDesc,
+      real_cudnnPoolingForward(handle, poolingDesc,
                         alpha, xDesc, x, beta, yDesc, y);
-  profiler::driver().this_thread().resume_cupti_callbacks();
 
-  api->add_output(yVal);
-  api->add_input(xVal);
-  profiler::atomic_out(api->to_json_string() + "\n");
+  finalize_api(profiler());
+  // profiler::driver().this_thread().resume_cupti_callbacks();
+
+  // api->add_output(yVal);
+  // api->add_input(xVal);
+  // profiler::atomic_out(api->to_json_string() + "\n");
   return ret;
 }
 
@@ -642,4 +722,3 @@ extern "C" cudnnStatus_t cudnnPoolingForward(
 // cudnnRNNBackwardWeights
 // cudnnRNNBackwardData
 
-#endif
