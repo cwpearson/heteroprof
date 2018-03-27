@@ -56,6 +56,8 @@ json Compute::to_json() const {
   j["completed"] = completed_ns();
   j["stream_id"] = streamId_;
   j["correlation_id"] = correlationId_;
+  j["start"] = start_ns();
+  j["duration"] = dur_ns();
   return j;
 }
 
