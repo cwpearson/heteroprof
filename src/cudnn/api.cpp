@@ -13,6 +13,7 @@ Cudnn::Cudnn(const tid_t callingThread, const std::string &name)
 json Cudnn::to_json() const {
     //Call parent class to_json
     json j = cuda::Api::to_json();
+    j["cudnn_handle"] = cudnn_handle_;
     j["input_vector"] = input_vector_;
     j["output_vector"] = output_vector_;
     return j;

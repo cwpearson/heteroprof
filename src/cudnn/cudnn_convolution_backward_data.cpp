@@ -16,12 +16,17 @@ CudnnConvolutionBackwardData::CudnnConvolutionBackwardData(const Api &api, cudnn
     : Api(api), cudnnHandle_(cudnnHandle), alpha_(alpha), wDesc_(wDesc), w_(w), dyDesc_(dyDesc), dy_(dy),
       convDesc_(convDesc), algo_(algo), workspace_(workSpace), workSpaceSizeInBytes_(workSpaceSizeInBytes), 
       beta_(beta), dxDesc_(dxDesc), dx_(dx) {
+        cudnn_handle_ = (uintptr_t)cudnnHandle_;
         std::vector<uint64_t> input_vector {
-                                            (uint64_t)cudnnHandle_, (uint64_t)alpha_, (uint64_t)wDesc_, (uint64_t)w_, (uint64_t)dyDesc_, (uint64_t)dy_,
+                                            (uint64_t)alpha_, (uint64_t)wDesc_, (uint64_t)w_, (uint64_t)dyDesc_, (uint64_t)dy_,
                                             (uint64_t)convDesc_, (uint64_t)algo_, (uint64_t)workspace_, (uint64_t)workSpaceSizeInBytes_, (uint64_t)beta_, 
                                             (uint64_t)dxDesc_, (uint64_t)dx_
                                            };
+        std::vector<uint64_t> output_vector { 
+                                              (uint64_t)dx_
+                                            };
         set_cudnn_inputs(input_vector);
+        set_cudnn_outputs(output_vector);
       }
 
 

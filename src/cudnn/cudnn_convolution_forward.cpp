@@ -16,12 +16,17 @@ CudnnConvolutionForward::CudnnConvolutionForward(const Api &api, cudnnHandle_t c
     : Api(api), cudnnHandle_(cudnnHandle), alpha_(alpha), xDesc_(xDesc), x_(x), wDesc_(wDesc), w_(w),
       convDesc_(convDesc), algo_(algo), workspace_(workSpace), workSpaceSizeInBytes_(workSpaceSizeInBytes),
       beta_(beta), yDesc_(yDesc), y_(y) {
+        cudnn_handle_ = (uintptr_t)cudnnHandle_;
         std::vector<uint64_t> input_vector {
-                                            (uint64_t)cudnnHandle_, (uint64_t)alpha_, (uint64_t)xDesc_, (uint64_t)x_, (uint64_t)wDesc_, (uint64_t)w_,
+                                            (uint64_t)alpha_, (uint64_t)xDesc_, (uint64_t)x_, (uint64_t)wDesc_, (uint64_t)w_,
                                             (uint64_t)convDesc_, (uint64_t)algo_, (uint64_t)workspace_, (uint64_t)workSpaceSizeInBytes_, (uint64_t)beta_,
                                             (uint64_t)yDesc_, (uint64_t)y_
                                            };
+        std::vector<uint64_t> output_vector {
+                                              (uint64_t)y_
+                                            };
         set_cudnn_inputs(input_vector);
+        set_cudnn_outputs(output_vector);
       }
 
 // json CudnnConvolutionForward::to_json() const {

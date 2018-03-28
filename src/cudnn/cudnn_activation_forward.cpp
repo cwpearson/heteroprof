@@ -14,11 +14,16 @@ CudnnActivationForward::CudnnActivationForward(const Api &api, const cudnnHandle
     : Api(api), cudnnHandle_(cudnnHandle), activationDesc_(activationDesc), 
       alpha_(alpha), xDesc_(xDesc), x_(x),
       beta_(beta), yDesc_(yDesc), y_(y) {
+        cudnn_handle_ = (uintptr_t)cudnnHandle_;
         std::vector<uint64_t> input_vector {
-                                              (uint64_t)cudnnHandle_, (uint64_t)activationDesc_, (uint64_t)alpha_, (uint64_t)xDesc_, (uint64_t)x_, 
-                                              (uint64_t)beta_, (uint64_t)yDesc_, (uint64_t)y_
+                                              (uint64_t)activationDesc_, (uint64_t)alpha_, (uint64_t)xDesc_, (uint64_t)x_, 
+                                              (uint64_t)beta_, (uint64_t)yDesc_
                                            };
+        std::vector<uint64_t> output_vector {
+                                              (uint64_t)y_
+                                            };
         set_cudnn_inputs(input_vector);
+        set_cudnn_outputs(output_vector);
       }
 
 

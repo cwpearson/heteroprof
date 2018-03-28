@@ -14,11 +14,16 @@ CudnnActivationBackward::CudnnActivationBackward(const Api &api, cudnnHandle_t c
     : Api(api), cudnnHandle_(cudnnHandle), activationDesc_(activationDesc), alpha_(alpha),
       yDesc_(yDesc), y_(y), dyDesc_(dyDesc), dy_(dy), xDesc_(xDesc), x_(x), beta_(beta),
       dxDesc_(dxDesc), dx_(dx) {
+        cudnn_handle_ = (uintptr_t)cudnnHandle;
         std::vector<uint64_t> input_vector {
-                                            (uint64_t) cudnnHandle_, (uint64_t)activationDesc_, (uint64_t)alpha_, (uint64_t)yDesc_, (uint64_t)y_, 
-                                            (uint64_t) dyDesc_, (uint64_t)dy_, (uint64_t)xDesc_, (uint64_t)x_, (uint64_t)beta_, (uint64_t)dxDesc_, (uint64_t)dx_
+                                            (uint64_t)activationDesc_, (uint64_t)alpha_, (uint64_t)yDesc_, (uint64_t)y_, 
+                                            (uint64_t) dyDesc_, (uint64_t)dy_, (uint64_t)xDesc_, (uint64_t)x_, (uint64_t)beta_, (uint64_t)dxDesc_
                                            };
+        std::vector<uint64_t> output_vector {
+                                              (uint64_t)dx_
+                                            };
         set_cudnn_inputs(input_vector);
+        set_cudnn_outputs(output_vector);
       }
 
 //Not necessary for now

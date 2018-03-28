@@ -489,7 +489,8 @@ extern "C" cudnnStatus_t cudnnConvolutionBackwardFilter(
     profiler().driver().this_thread().configured_call().start();  
 
     const cudnnStatus_t ret = real_cudnnConvolutionBackwardFilter(handle, alpha, xDesc, x, dyDesc,
-      dy, convDesc, algo, workSpace, workSpaceSizeInBytes, beta, dwDesc, dw);
+                                                                  dy, convDesc, algo, workSpace, 
+                                                                  workSpaceSizeInBytes, beta, dwDesc, dw);
     finalize_api(profiler());
 //   profiler::driver().this_thread().resume_cupti_callbacks();
 
@@ -571,7 +572,8 @@ cudnnConvolutionForward(cudnnHandle_t handle, const void *alpha,
   profiler().driver().this_thread().configured_call().start();  
 
   const cudnnStatus_t ret = real_cudnnConvolutionForward(handle, alpha, xDesc, x, wDesc, w,
-      convDesc, algo, workSpace, workSpaceSizeInBytes, beta, yDesc, y);
+                                                         convDesc, algo, workSpace, 
+                                                         workSpaceSizeInBytes, beta, yDesc, y);
 
   finalize_api(profiler());
   // profiler::driver().this_thread().resume_cupti_callbacks();

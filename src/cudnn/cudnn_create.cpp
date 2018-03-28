@@ -8,10 +8,7 @@ using json = nlohmann::json;
 
 CudnnCreate::CudnnCreate(const Cudnn &api, const cudnnHandle_t *cudnnHandle)
     : Api(api), cudnnHandle_(cudnnHandle) {
-      std::vector<uint64_t> input_vector {
-                                          (uint64_t)cudnnHandle_
-                                         };
-      set_cudnn_inputs(input_vector);
+        cudnn_handle_ = (uintptr_t)cudnnHandle_;
     }
 
 // json CudnnCreate::to_json() const {

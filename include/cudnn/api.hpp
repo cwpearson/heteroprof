@@ -23,6 +23,7 @@ public:
 protected:
   void set_cudnn_inputs(std::vector<uint64_t> input_vector);
   void set_cudnn_outputs(std::vector<uint64_t> output_vector);
+  uintptr_t cudnn_handle_;
 
 private:
   std::vector<uint64_t> input_vector_;
