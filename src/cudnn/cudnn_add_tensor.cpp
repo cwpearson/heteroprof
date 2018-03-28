@@ -12,18 +12,24 @@ CudnnAddTensor::CudnnAddTensor(const Api &api, const cudnnHandle_t cudnnHandle,
                                                const cudnnTensorDescriptor_t cDesc, void *C)
     : Api(api), cudnnHandle_(cudnnHandle), alpha_(alpha), 
       aDesc_(aDesc), A_(A), beta_(beta), cDesc_(cDesc),
-      C_(C) {}
+      C_(C) {
+        std::vector<uint64_t> input_vector {
+                                            (uint64_t)cudnnHandle_, (uint64_t)alpha_, (uint64_t)aDesc_, (uint64_t)A_, (uint64_t)beta_, (uint64_t)cDesc_, (uint64_t)C_
+                                           };
 
-json CudnnAddTensor::to_json() const {
-  json j = Api::to_json();
-  j["cudnn_handle"] = (uint64_t)cudnnHandle_;
-  j["alpha"] = (uint64_t)alpha_;
-  j["a_desc"] = (uint64_t)aDesc_;
-  j["A"] = (uint64_t)A_;
-  j["beta"] = (uint64_t)beta_;
-  j["c_desc"] = (uint64_t)cDesc_;
-  j["C"] = (uint64_t)C_;
-  return j;
-}
+        set_cudnn_inputs(input_vector);
+      }
+
+// json CudnnAddTensor::to_json() const {
+//   json j = Api::to_json();
+//   j["cudnn_handle"] = (uint64_t)cudnnHandle_;
+//   j["alpha"] = (uint64_t)alpha_;
+//   j["a_desc"] = (uint64_t)aDesc_;
+//   j["A"] = (uint64_t)A_;
+//   j["beta"] = (uint64_t)beta_;
+//   j["c_desc"] = (uint64_t)cDesc_;
+//   j["C"] = (uint64_t)C_;
+//   return j;
+// }
 
 }  // namespace cudnn

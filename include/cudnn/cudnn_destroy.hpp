@@ -18,7 +18,8 @@ protected:
 public:
   CudnnDestroy(const Api &api, const cudnnHandle_t cudnnHandle);
 
-  virtual json to_json() const override;
+  //Disable for now
+  // virtual json to_json() const override;
 };
 
 } // namespace cudnn

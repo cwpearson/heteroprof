@@ -28,7 +28,8 @@ public:
                       const void *alpha, const cudnnTensorDescriptor_t xDesc, const void *x,
                       const void *beta, const cudnnTensorDescriptor_t yDesc, void *y);
 
-  virtual json to_json() const override;
+  //Disable for now
+  // virtual json to_json() const override;
 };
 
 } // namespace cudnn

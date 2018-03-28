@@ -29,8 +29,9 @@ public:
                          const void *beta, const cudnnTensorDescriptor_t yDesc,
                          void *y);
 
-  virtual json to_json() const override;
-};
+//Disable for now
+  // virtual json to_json() const override;
+  };
 
 } // namespace cudnn
 

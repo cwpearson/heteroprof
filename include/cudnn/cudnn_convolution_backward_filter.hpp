@@ -36,7 +36,8 @@ public:
                                  size_t workSpaceSizeInBytes, const void *beta,
                                  const cudnnFilterDescriptor_t dwDesc, void *dw);
 
-  virtual json to_json() const override;
+ //Disable for now
+  // virtual json to_json() const override;
 };
 
 } // namespace cudnn
