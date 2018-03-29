@@ -83,7 +83,7 @@ extern "C" cudnnStatus_t cudnnCreate(cudnnHandle_t *handle) {
 //   profiler().driver().this_thread().pause_cupti_callbacks();
 
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+  // //profiler().driver().this_thread().configured_call().start();  
 
   const cudnnStatus_t ret = real_cudnnCreate(handle);
   finalize_api(profiler());
@@ -106,7 +106,7 @@ extern "C" cudnnStatus_t cudnnDestroy(cudnnHandle_t handle) {
   auto a = make_cudnn_this_thread_now("cudnnDestroy");
   auto api = std::make_shared<CudnnDestroy>(a, handle);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+  // //profiler().driver().this_thread().configured_call().start();  
 
   const cudnnStatus_t ret = real_cudnnDestroy(handle);
   finalize_api(profiler());
@@ -152,7 +152,7 @@ extern "C" cudnnStatus_t cudnnActivationForward(
                                                         alpha, xDesc, x, beta,
                                                         yDesc, y);
     profiler().driver().this_thread().api_enter(api);
-    profiler().driver().this_thread().configured_call().start();  
+    //profiler().driver().this_thread().configured_call().start();  
 
 
     const cudnnStatus_t ret =real_cudnnActivationForward(handle,
@@ -205,7 +205,7 @@ extern "C" cudnnStatus_t cudnnAddTensor(cudnnHandle_t handle, const void *alpha,
     auto a = make_cudnn_this_thread_now("cudnnAddTensor");
     auto api = std::make_shared<CudnnAddTensor>(a, handle, alpha, aDesc, A, beta, cDesc, C);
     profiler().driver().this_thread().api_enter(api);
-    profiler().driver().this_thread().configured_call().start();  
+    //profiler().driver().this_thread().configured_call().start();  
     const cudnnStatus_t ret = real_cudnnAddTensor(handle, alpha, aDesc, 
                                                   A, beta, cDesc, C);
 
@@ -273,7 +273,7 @@ extern "C" cudnnStatus_t cudnnActivationBackward(
                                                 xDesc, x, beta,
                                                 dxDesc, dx);
     profiler().driver().this_thread().api_enter(api);
-    profiler().driver().this_thread().configured_call().start();  
+    //profiler().driver().this_thread().configured_call().start();  
     const cudnnStatus_t ret = real_cudnnActivationBackward(handle, activationDesc, alpha, yDesc,
       y, dyDesc, dy, xDesc, x, beta, dxDesc, dx);
 //   profiler::driver().this_thread().resume_cupti_callbacks();
@@ -345,7 +345,7 @@ extern "C" cudnnStatus_t cudnnConvolutionBackwardData(
                                                               workSpaceSizeInBytes, beta,
                                                               dxDesc, dx);
     profiler().driver().this_thread().api_enter(api);
-    profiler().driver().this_thread().configured_call().start();  
+    //profiler().driver().this_thread().configured_call().start();  
     const cudnnStatus_t ret = real_cudnnConvolutionBackwardData(handle, alpha, wDesc, w, dyDesc,
                                                                 dy, convDesc, algo, workSpace, 
                                                                 workSpaceSizeInBytes, beta, dxDesc, dx);
@@ -409,7 +409,7 @@ cudnnConvolutionBackwardBias(cudnnHandle_t handle, const void *alpha,
                                                               dyDesc, dy, beta, 
                                                               dbDesc, db);
     profiler().driver().this_thread().api_enter(api);
-    profiler().driver().this_thread().configured_call().start();  
+    //profiler().driver().this_thread().configured_call().start();  
 
     const cudnnStatus_t ret =real_cudnnConvolutionBackwardBias(handle, alpha,
                                                                dyDesc, dy, beta, 
@@ -486,7 +486,7 @@ extern "C" cudnnStatus_t cudnnConvolutionBackwardFilter(
                                                                 workSpaceSizeInBytes, beta,
                                                                 dwDesc, dw);
     profiler().driver().this_thread().api_enter(api);
-    profiler().driver().this_thread().configured_call().start();  
+    //profiler().driver().this_thread().configured_call().start();  
 
     const cudnnStatus_t ret = real_cudnnConvolutionBackwardFilter(handle, alpha, xDesc, x, dyDesc,
                                                                   dy, convDesc, algo, workSpace, 
@@ -569,7 +569,7 @@ cudnnConvolutionForward(cudnnHandle_t handle, const void *alpha,
                                                        workSpaceSizeInBytes, beta,
                                                        yDesc, y);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+  //profiler().driver().this_thread().configured_call().start();  
 
   const cudnnStatus_t ret = real_cudnnConvolutionForward(handle, alpha, xDesc, x, wDesc, w,
                                                          convDesc, algo, workSpace, 
@@ -635,7 +635,7 @@ extern "C" cudnnStatus_t cudnnSoftmaxForward(
                                                    alpha, xDesc, x,
                                                    beta, yDesc, y);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+  //profiler().driver().this_thread().configured_call().start();  
 
 
   const cudnnStatus_t ret =
@@ -695,7 +695,7 @@ extern "C" cudnnStatus_t cudnnPoolingForward(
                                                    alpha, xDesc, x,
                                                    beta, yDesc, y);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+  //profiler().driver().this_thread().configured_call().start();  
 
 
   const cudnnStatus_t ret =

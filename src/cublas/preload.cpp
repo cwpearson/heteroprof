@@ -5,7 +5,7 @@
 
 #include <cublas_v2.h>
 
-#include "preload_cublas.hpp"
+#include "cublas/preload.hpp"
 
 // #include "cprof/model/driver.hpp"
 // #include "cprof/model/thread.hpp"
@@ -74,7 +74,7 @@ extern "C" cublasStatus_t cublasCreate(cublasHandle_t *handle) {
   auto api = std::make_shared<CublasCreate>(a, handle);
 
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+  // profiler().driver().this_thread().configured_call().start();  
 
 
   const cublasStatus_t ret = real_cublasCreate(handle);
@@ -91,7 +91,7 @@ extern "C" cublasStatus_t cublasDestroy(cublasHandle_t handle) {
   auto api = std::make_shared<CublasDestroy>(a, handle);
 
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret = real_cublasDestroy(handle);
   finalize_api(profiler());
@@ -116,7 +116,7 @@ cublasDgemm(cublasHandle_t handle, cublasOperation_t transa,
                                            A, lda, B, ldb,
                                            beta, C, ldc);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret = real_cublasDgemm(handle, transa, transb, m, n, k,
                         alpha, A, lda, B, ldb, beta, C, ldc);
@@ -144,7 +144,7 @@ cublasSaxpy(cublasHandle_t handle, int n,
                                            alpha, /* host or device pointer */
                                            x, incx, y, incy);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
   const cublasStatus_t ret = real_cublasSaxpy(handle, n,
                                               alpha, x, incx, y, incy);
 
@@ -175,7 +175,7 @@ cublasSgemm(cublasHandle_t handle, cublasOperation_t transa,
                                            beta, /* host or device pointer */
                                            C, ldc);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret =
       real_cublasSgemm(handle, transa, transb, m, n, k,
@@ -204,7 +204,7 @@ extern "C" cublasStatus_t cublasDgemv(cublasHandle_t handle,
                                            lda, x, incx,
                                            beta, y, incy);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret =
       real_cublasDgemv(handle, trans, m, n, alpha, A,
@@ -234,7 +234,7 @@ extern "C" cublasStatus_t cublasSgemv(cublasHandle_t handle,
                                            lda, x, incx,
                                            beta, y, incy);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret =
       real_cublasSgemv(handle, trans, m, n, alpha, A,
@@ -254,7 +254,7 @@ extern "C" cublasStatus_t cublasSasum(cublasHandle_t handle, int n,
   auto api = std::make_shared<CublasSasum>(a, handle, n,
                                            x, incx, result);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret =
       real_cublasSasum(handle, n, x, incx, result);
@@ -277,7 +277,7 @@ cublasSscal(cublasHandle_t handle, int n,
   auto api = std::make_shared<CublasSscal>(a, handle, n,
                                            alpha, x, incx);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret =
       real_cublasSscal(handle, n, alpha, x, incx);
@@ -301,7 +301,7 @@ extern "C" cublasStatus_t cublasSdot(cublasHandle_t handle, int n,
                                           x, incx, y, incy,
                                           result);
   profiler().driver().this_thread().api_enter(api);
-  profiler().driver().this_thread().configured_call().start();  
+//  profiler().driver().this_thread().configured_call().start();  
 
   auto ret = real_cublasSdot(handle, n, x, incx, y,
                                incy, result);
