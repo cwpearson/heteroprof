@@ -9,6 +9,9 @@
 #include "nccl/api.hpp"
 #include "nccl/nccl_comm_destroy.hpp"
 #include "nccl/nccl_all_reduce.hpp"
+#include "nccl/nccl_comm_init_all.hpp"
+#include "nccl/nccl_comm_init_rank.hpp"
+#include "nccl/nccl_bcast.hpp"
 
 namespace nccl {
 using sys::get_thread_id;    
@@ -146,12 +149,17 @@ extern "C" ncclResult_t ncclCommInitAll(ncclComm_t *comms, int nGPUs,
                                         const int *devList) {
   NCCL_DLSYM_BOILERPLATE(ncclCommInitAll);
 
-  const ncclResult_t ret = real_ncclCommInitAll(comms, nGPUs, devList);
+  auto a = make_nccl_this_thread_now("ncclCommInitAll");
+  auto api = std::make_shared<NcclCommInitAll>(a, comms, nGPUs,
+                                               devList);
 
-  for (int i = 0; i < nGPUs; ++i) {
-    const int dev = devList ? devList[i] : i;
-    profiler::driver().register_ncclComm(comms[i], dev);
-  }
+  const ncclResult_t ret = real_ncclCommInitAll(comms, nGPUs, devList);
+  finalize_api(profiler());
+
+  // for (int i = 0; i < nGPUs; ++i) {
+  //   const int dev = devList ? devList[i] : i;
+  //   // profiler::driver().register_ncclComm(comms[i], dev);
+  // }
 
   return ret;
 }
@@ -162,11 +170,14 @@ extern "C" ncclResult_t ncclCommInitRank(ncclComm_t *comm, int ndev,
                                          ncclUniqueId cliqueId, int rank) {
   NCCL_DLSYM_BOILERPLATE(ncclCommInitRank);
 
+  auto a = make_nccl_this_thread_now("ncclCommInitRank");
+  auto api = std::make_shared<NcclCommInitRank>(a, comm, ndev,
+                                                cliqueId, rank);
+
 
   const ncclResult_t ret = real_ncclCommInitRank(comm, ndev, cliqueId, rank);
-  profiler::driver().register_ncclComm(
-      *comm, profiler::driver().this_thread().current_device());
 
+  finalize_api(profiler());
   return ret;
 }
 
@@ -180,13 +191,16 @@ extern "C" ncclResult_t ncclBcast(void *buff, int count,
 
   NCCL_DLSYM_BOILERPLATE(ncclBcast);
 
-  register_ncclBcast(uintptr_t(buff), count, datatype, root, comm);
 
+  auto a = make_nccl_this_thread_now("ncclBcast");
+  auto api = std::make_shared<NcclBcast>(a, buff, count,
+                                         datatype, root,
+                                        comm, stream);
 
   const ncclResult_t ret =
       real_ncclBcast(buff, count, datatype, root, comm, stream);
 
-
+  finalize_api(profiler());
   return ret;
 }
 
@@ -202,24 +216,27 @@ extern "C" ncclResult_t ncclAllReduce(const void *sendbuff, void *recvbuff,
 
   NCCL_DLSYM_BOILERPLATE(ncclAllReduce);
 
-  register_ncclAllReduce(uintptr_t(sendbuff), uintptr_t(recvbuff), count,
-                         datatype, comm);
+    auto a = make_nccl_this_thread_now("ncclAllReduce");
+    auto api = std::make_shared<NcclAllReduce>(a, sendbuff, recvbuff,
+                                               count, datatype,
+                                               op, comm,
+                                               stream);
 
-  const ncclResult_t ret =
+    const ncclResult_t ret =
       real_ncclAllReduce(sendbuff, recvbuff, count, datatype, op, comm, stream);
 
+  finalize_api(profiler());
   return ret;
 }
 
 //Should this be nccl?
 typedef ncclResult_t (*ncclCommDestroyFunc)(ncclComm_t comm);
-extern "C" ncclResult_t ncclCommDestroy(ncclComm_t comm) {
+extern "C" ncclResult_t nccCommDestroy(ncclComm_t comm) {
   NCCL_DLSYM_BOILERPLATE(ncclCommDestroy);
 
 
-  auto a = make_nccl_this_thread_now("nccCommDestroy");
-  auto api = std::make_shared<NcclCommDestroy>(a, handle, n,
-                                           x, incx, result);
+  auto a = make_nccl_this_thread_now("ncclCommDestroy");
+  auto api = std::make_shared<NcclCommDestroy>(a, comm);
   profiler().driver().this_thread().api_enter(api);
 
   const ncclResult_t ret = real_ncclCommDestroy(comm);

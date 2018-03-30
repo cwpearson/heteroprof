@@ -6,7 +6,8 @@ namespace nccl {
 
 using json = nlohmann::json;
 
-NcclCommInitRank::NcclCommInitRank(const Nccl &api, ncclComm_t comm)
+NcclCommInitRank::NcclCommInitRank(const Nccl &api, ncclComm_t *comm, int ndev,
+                                   ncclUniqueId cliqueId, int rank)
     : Api(api), comm_(comm) {
         // device_ = profiler().driver().this_thread().device(comm_);
         // handle_ = (uintptr_t)cublasHandle_;
