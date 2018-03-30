@@ -125,7 +125,7 @@ public:
     logging::atomic_err(ss.str());
     return cudnnHandleToDevice_.at(h);
   }
-
+#endif
   int device(const ncclComm_t c) {
     std::stringstream ss;
     const int dev = ncclCommToDevice_.at(c);
@@ -134,7 +134,7 @@ public:
     logging::atomic_err(ss.str());
     return dev;
   }
-#endif
+
   mapped_type &this_thread() { return threadStates_[sys::get_thread_id()]; }
 };
 

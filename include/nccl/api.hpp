@@ -2,9 +2,9 @@
 #define NCCL_API_HPP
 
 #include "cuda/api.hpp"
-#include "nccl/api.hpp"
 #include "sys/thread.hpp"
 #include <vector>
+#include <nccl.h>
 
 namespace nccl {
 
@@ -23,12 +23,13 @@ public:
 protected:
   void set_nccl_inputs(std::vector<uint64_t> input_vector);
   void set_nccl_outputs(std::vector<uint64_t> output_vector);
-  uintptr_t nccl_handle_;
+  uintptr_t comm_;
+  int device_;
 
 private:
   std::vector<uint64_t> input_vector_;
   std::vector<uint64_t> output_vector_;
 };
 
-} // namespace cudnn
+} // namespace nccl
 #endif
