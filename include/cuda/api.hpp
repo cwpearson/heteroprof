@@ -4,6 +4,7 @@
 #include <atomic>
 #include <chrono>
 #include <string>
+#include <vector>
 
 #include "nlohmann/json.hpp"
 
@@ -23,7 +24,7 @@ public:
 
   virtual size_t id() const { return id_; }
   virtual json to_json() const;
-  virtual json to_json_vector() const;
+  virtual std::vector<json> to_json_vector() const;
   virtual std::string hprof_kind() const { return "cuda_api"; }
   const std::string &name() const;
 

@@ -18,8 +18,7 @@ public:
   NcclCommInitRank(const Api &api, ncclComm_t *comm, int ndev,
                    ncclUniqueId cliqueId, int rank);
 
-  //Disable for now
-  // virtual json to_json() const override;
+  virtual std::vector<json> to_json_vector() const override;
 };
 
 } // namespace cudnn

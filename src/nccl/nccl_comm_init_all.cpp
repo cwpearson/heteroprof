@@ -21,7 +21,7 @@ json NcclCommInitAll::to_json() const {
     return j;
 }
 
-std::vector<json> NcclCommInitAll::to_json_vector(){
+std::vector<json> NcclCommInitAll::to_json_vector() const {
     return handle_json_;
 }
 

@@ -23,7 +23,7 @@ json Api::to_json() const {
   return j;
 }
 
-json Api::to_json_vector() const {
+std::vector<json> Api::to_json_vector() const {
   assert(0 && "to_json_vector not implemented here");
 }
 

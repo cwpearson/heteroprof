@@ -21,7 +21,7 @@ public:
   NcclCommInitAll(const Api &api, ncclComm_t *comms, int nGPUs,
                   const int *devList);
   virtual json to_json() const override;
-  std::vector<json> to_json_vector();
+  virtual std::vector<json> to_json_vector() const override;
 
 private:
   void fill_in_handles();
