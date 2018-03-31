@@ -2,6 +2,7 @@
 #define CUDA_NCCL_COMM_INIT_ALL
 
 #include "nccl/api.hpp"
+#include <vector>;
 
 
 namespace nccl {
@@ -14,16 +15,24 @@ class NcclCommInitAll : public nccl::Nccl {
 protected:
   ncclComm_t *comm_;
   int nGPUs_;
+  const int *devList_;
 
 public:
   NcclCommInitAll(const Api &api, ncclComm_t *comms, int nGPUs,
                   const int *devList);
+  virtual json to_json() const override;
+                  
 
-  //Disable for now
-  // virtual json to_json() const override;
+private:
+  void fill_in_handles();
+  json make_handle_json(ncclComm_t comms, int cur_gpu);
+
+  std::vector<json> handle_json_;
+
+
 };
 
-} // namespace cudnn
+} // namespace nccl
 
 
 #endif
