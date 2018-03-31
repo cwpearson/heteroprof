@@ -13,6 +13,7 @@ class NcclCommInitRank : public nccl::Nccl {
 
 protected:
   ncclComm_t *comm_;
+  std::vector<json> handle_json_;
 
 public:
   NcclCommInitRank(const Api &api, ncclComm_t *comm, int ndev,

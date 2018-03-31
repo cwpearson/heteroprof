@@ -13,5 +13,8 @@ NcclCommInitRank::NcclCommInitRank(const Nccl &api, ncclComm_t *comm, int ndev,
         // handle_ = (uintptr_t)cublasHandle_;
     }
 
+    std::vector<json> NcclCommInitRank::to_json_vector() const {
+        return handle_json_;
+    }   
 
 }  // namespace nccl

@@ -12,15 +12,16 @@ NcclCommInitAll::NcclCommInitAll(const Nccl &api, ncclComm_t *comms, int nGPUs,
         fill_in_handles();
     }
 
-//Have specialized json function due to the fact that it contains vector to comms
 json NcclCommInitAll::to_json() const {
+    assert(0 && "We shouldn't be here");
     json j = cuda::Api::to_json();
-    j["handle"] = (uint64_t)comm_;
+    // j["handle"] = (uint64_t)comm_;
     // j["input_vector"] = input_vector_;
     // j["output_vector"] = output_vector_;
     return j;
 }
 
+//Have specialized json function due to the fact that it contains vector to comms
 std::vector<json> NcclCommInitAll::to_json_vector() const {
     return handle_json_;
 }
