@@ -5,6 +5,7 @@
 #include "sys/thread.hpp"
 #include <vector>
 #include <nccl.h>
+#include <cassert> 
 
 namespace nccl {
 

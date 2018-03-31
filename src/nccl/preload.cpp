@@ -36,6 +36,13 @@ void finalize_api(Profiler &p){
     p.record(api->to_json());
     p.driver().this_thread().api_exit(); 
 }
+
+void finalize_api_vector(Profiler &p){
+    auto api = p.driver().this_thread().current_api();
+    api->set_wall_end(std::chrono::high_resolution_clock::now());
+    p.record(api->to_json_vector());
+    p.driver().this_thread().api_exit(); 
+}
 } // namespace nccl
 
 
@@ -154,12 +161,7 @@ extern "C" ncclResult_t ncclCommInitAll(ncclComm_t *comms, int nGPUs,
                                                devList);
 
   const ncclResult_t ret = real_ncclCommInitAll(comms, nGPUs, devList);
-  finalize_api(profiler());
-
-  // for (int i = 0; i < nGPUs; ++i) {
-  //   const int dev = devList ? devList[i] : i;
-  //   // profiler::driver().register_ncclComm(comms[i], dev);
-  // }
+  finalize_api_vector(profiler());
 
   return ret;
 }

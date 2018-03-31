@@ -150,6 +150,12 @@ void Profiler::record(const std::string &s) { return logging::atomic_out(s); }
 void Profiler::record(const json &j) {
   return logging::atomic_out(j.dump() + "\n");
 }
+void Profiler::record(const std::vector<nlohmann::json> &j){
+  for (nlohmann::json cur_json : j){
+    logging::atomic_out(cur_json.dump() + "\n");
+  }
+}
+
 
 Driver &Profiler::driver() { return driver_; }
 

@@ -21,6 +21,10 @@ json NcclCommInitAll::to_json() const {
     return j;
 }
 
+std::vector<json> NcclCommInitAll::to_json_vector(){
+    return handle_json_;
+}
+
 void NcclCommInitAll::fill_in_handles(){
     for (int i=0; i<nGPUs_; i++){
         const int dev = devList_ ? devList_[i] : i;
