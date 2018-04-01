@@ -19,7 +19,7 @@ public:
   CublasCreate(const Api &api, const cublasHandle_t *handle);
 
   //Disable for now
-  // virtual json to_json() const override;
+  virtual json to_json() const override;
 };
 
 } // namespace cudnn

@@ -14,6 +14,11 @@ class NcclCommInitRank : public nccl::Nccl {
 protected:
   ncclComm_t *comm_;
   std::vector<json> handle_json_;
+  int ndev_;
+  ncclUniqueId cliqueId_;
+  int rank_;
+  void fill_in_handles();
+  json make_handle_json(ncclComm_t comms, int cur_gpu);
 
 public:
   NcclCommInitRank(const Api &api, ncclComm_t *comm, int ndev,
