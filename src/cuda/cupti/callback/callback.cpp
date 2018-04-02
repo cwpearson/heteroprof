@@ -98,8 +98,6 @@ static void handleCudaFree(const CUpti_CallbackData *cbdata, Profiler &profiler,
     auto api = make_api_this_thread_now(cbdata, domain);
     auto df = std::make_shared<DeviceFree>(api, devPtr);
     profiler.driver().this_thread().api_enter(df);
-
-  } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
     finalize_api(profiler);
   } else {
     assert(0 && "How did we get here?");
