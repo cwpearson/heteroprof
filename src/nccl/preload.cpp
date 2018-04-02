@@ -160,8 +160,9 @@ extern "C" ncclResult_t ncclCommInitAll(ncclComm_t *comms, int nGPUs,
   auto api = std::make_shared<NcclCommInitAll>(a, comms, nGPUs,
                                                devList);
   profiler().driver().this_thread().api_enter(api);  
-
+  profiler().driver().this_thread().pause_cupti_callbacks();
   const ncclResult_t ret = real_ncclCommInitAll(comms, nGPUs, devList);
+  profiler().driver().this_thread().resume_cupti_callbacks();  
   finalize_api_vector(profiler());
 
   return ret;
@@ -177,9 +178,9 @@ extern "C" ncclResult_t ncclCommInitRank(ncclComm_t *comm, int ndev,
   auto api = std::make_shared<NcclCommInitRank>(a, comm, ndev,
                                                 cliqueId, rank);
   profiler().driver().this_thread().api_enter(api);
-  
+  profiler().driver().this_thread().pause_cupti_callbacks();
   const ncclResult_t ret = real_ncclCommInitRank(comm, ndev, cliqueId, rank);
-
+  profiler().driver().this_thread().resume_cupti_callbacks();  
   finalize_api(profiler());
   return ret;
 }
@@ -205,7 +206,6 @@ extern "C" ncclResult_t ncclBcast(void *buff, int count,
   const ncclResult_t ret =
       real_ncclBcast(buff, count, datatype, root, comm, stream);
   profiler().driver().this_thread().resume_cupti_callbacks();
-
   finalize_api(profiler());
   return ret;
 }
@@ -228,11 +228,10 @@ extern "C" ncclResult_t ncclAllReduce(const void *sendbuff, void *recvbuff,
                                                op, comm,
                                                stream);
   profiler().driver().this_thread().api_enter(api);
-    
-
+  profiler().driver().this_thread().pause_cupti_callbacks();  
     const ncclResult_t ret =
       real_ncclAllReduce(sendbuff, recvbuff, count, datatype, op, comm, stream);
-
+  profiler().driver().this_thread().resume_cupti_callbacks();
   finalize_api(profiler());
   return ret;
 }
@@ -246,8 +245,9 @@ extern "C" ncclResult_t nccCommDestroy(ncclComm_t comm) {
   auto a = make_nccl_this_thread_now("ncclCommDestroy");
   auto api = std::make_shared<NcclCommDestroy>(a, comm);
   profiler().driver().this_thread().api_enter(api);
-
+  profiler().driver().this_thread().pause_cupti_callbacks();
   const ncclResult_t ret = real_ncclCommDestroy(comm);
+  profiler().driver().this_thread().resume_cupti_callbacks();
   finalize_api(profiler());
 
   return ret;
