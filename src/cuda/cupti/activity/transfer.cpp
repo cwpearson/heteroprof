@@ -47,6 +47,10 @@ Transfer::Transfer(const CUpti_ActivityMemcpy *record) : Transfer() {
   flags_ = record->flags;
   runtimeCorrelationId_ = record->runtimeCorrelationId;
   streamId_ = record->streamId;
+
+  start_ = time_point_t(std::chrono::nanoseconds(record->start));
+  duration_ = std::chrono::nanoseconds(record->end) -
+              std::chrono::nanoseconds(record->start);
 }
 
 json Transfer::to_json() const {

@@ -20,7 +20,6 @@ void handler(const CUpti_Activity *record, Profiler &profiler) {
   switch (record->kind) {
   case CUPTI_ACTIVITY_KIND_KERNEL: {
     auto activityCast = reinterpret_cast<const CUpti_ActivityKernel3 *>(record);
-
     activity = std::make_shared<Compute>(activityCast);
     break;
   }

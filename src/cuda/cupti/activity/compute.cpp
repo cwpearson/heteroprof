@@ -31,6 +31,9 @@ Compute::Compute(const CUpti_ActivityKernel3 *record) : Compute() {
   } else {
     completed_ = time_point_t(std::chrono::nanoseconds(record->completed));
   }
+  start_ = time_point_t(std::chrono::nanoseconds(record->start));
+  duration_ = std::chrono::nanoseconds(record->end) -
+              std::chrono::nanoseconds(record->start);
   cudaDeviceId_ = record->deviceId;
   contextId_ = record->contextId;
   correlationId_ = record->correlationId;

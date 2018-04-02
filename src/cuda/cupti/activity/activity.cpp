@@ -24,7 +24,7 @@ json Activity::to_json() const {
   json j;
   j["hprof_kind"] = hprof_kind();
   j["start"] = start_ns();
-  j["dur"] = dur_ns();
+  j["duration"] = dur_ns();
   return j;
 }
 

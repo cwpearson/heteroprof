@@ -13,7 +13,8 @@ class CudaSetupArgument : public cuda::cupti::callback::Api {
   using tid_t = sys::tid_t;
 
 private:
-  const uintptr_t arg_;
+  uintptr_t arg_;
+  bool is_arg_deref_;
   const size_t size_;   ///< size of argument
   const size_t offset_; ///< offset in argument stack to push new argument
 
