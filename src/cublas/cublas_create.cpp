@@ -14,7 +14,7 @@ CublasCreate::CublasCreate(const Cublas &api, const cublasHandle_t *handle)
 json CublasCreate::to_json() const {
     //Call parent class to_json
     json j = cuda::Api::to_json();
-    j["handle"] = handle_;
+    j["cublas_handle"] = handle_;
     return j;
 }
 

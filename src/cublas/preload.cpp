@@ -69,13 +69,10 @@ typedef cublasStatus_t (*cublasCreateFunc)(cublasHandle_t *handle);
 extern "C" cublasStatus_t cublasCreate(cublasHandle_t *handle) {
   CUBLAS_DLSYM_BOILERPLATE(cublasCreate);
 
-
   auto a = make_cublas_this_thread_now("cublasCreate");
   auto api = std::make_shared<CublasCreate>(a, handle);
 
   profiler().driver().this_thread().api_enter(api);
-  // profiler().driver().this_thread().configured_call().start();  
-
 
   const cublasStatus_t ret = real_cublasCreate(handle);
   finalize_api(profiler());
@@ -91,7 +88,6 @@ extern "C" cublasStatus_t cublasDestroy(cublasHandle_t handle) {
   auto api = std::make_shared<CublasDestroy>(a, handle);
 
   profiler().driver().this_thread().api_enter(api);
-//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret = real_cublasDestroy(handle);
   finalize_api(profiler());
@@ -116,7 +112,6 @@ cublasDgemm(cublasHandle_t handle, cublasOperation_t transa,
                                            A, lda, B, ldb,
                                            beta, C, ldc);
   profiler().driver().this_thread().api_enter(api);
-//  profiler().driver().this_thread().configured_call().start();  
 
   const cublasStatus_t ret = real_cublasDgemm(handle, transa, transb, m, n, k,
                         alpha, A, lda, B, ldb, beta, C, ldc);

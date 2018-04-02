@@ -152,7 +152,7 @@ extern "C" cudnnStatus_t cudnnActivationForward(
                                                         alpha, xDesc, x, beta,
                                                         yDesc, y);
     profiler().driver().this_thread().api_enter(api);
-    //profiler().driver().this_thread().configured_call().start();  
+    // profiler().driver().this_thread().configured_call().start();  
 
 
     const cudnnStatus_t ret =real_cudnnActivationForward(handle,
