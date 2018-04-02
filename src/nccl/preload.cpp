@@ -159,6 +159,7 @@ extern "C" ncclResult_t ncclCommInitAll(ncclComm_t *comms, int nGPUs,
   auto a = make_nccl_this_thread_now("ncclCommInitAll");
   auto api = std::make_shared<NcclCommInitAll>(a, comms, nGPUs,
                                                devList);
+  profiler().driver().this_thread().api_enter(api);  
 
   const ncclResult_t ret = real_ncclCommInitAll(comms, nGPUs, devList);
   finalize_api_vector(profiler());
@@ -175,8 +176,8 @@ extern "C" ncclResult_t ncclCommInitRank(ncclComm_t *comm, int ndev,
   auto a = make_nccl_this_thread_now("ncclCommInitRank");
   auto api = std::make_shared<NcclCommInitRank>(a, comm, ndev,
                                                 cliqueId, rank);
-
-
+  profiler().driver().this_thread().api_enter(api);
+  
   const ncclResult_t ret = real_ncclCommInitRank(comm, ndev, cliqueId, rank);
 
   finalize_api(profiler());
@@ -198,9 +199,12 @@ extern "C" ncclResult_t ncclBcast(void *buff, int count,
   auto api = std::make_shared<NcclBcast>(a, buff, count,
                                          datatype, root,
                                         comm, stream);
+  profiler().driver().this_thread().api_enter(api);  
 
+  profiler().driver().this_thread().pause_cupti_callbacks();
   const ncclResult_t ret =
       real_ncclBcast(buff, count, datatype, root, comm, stream);
+  profiler().driver().this_thread().resume_cupti_callbacks();
 
   finalize_api(profiler());
   return ret;
@@ -223,6 +227,8 @@ extern "C" ncclResult_t ncclAllReduce(const void *sendbuff, void *recvbuff,
                                                count, datatype,
                                                op, comm,
                                                stream);
+  profiler().driver().this_thread().api_enter(api);
+    
 
     const ncclResult_t ret =
       real_ncclAllReduce(sendbuff, recvbuff, count, datatype, op, comm, stream);

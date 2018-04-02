@@ -1,4 +1,4 @@
-
+#if false
 
 #include <cassert>
 #include <dlfcn.h>
@@ -305,3 +305,4 @@ extern "C" cublasStatus_t cublasSdot(cublasHandle_t handle, int n,
   return ret;
 }
 
+#endif

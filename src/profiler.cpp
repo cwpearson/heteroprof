@@ -119,11 +119,11 @@ Profiler::Profiler() {
   log() << "INFO: done enabling callback API domains" << std::endl;
 
   if (WITH_CUDNN) {
-    cudnn::set_profiler(*this);
+    // cudnn::set_profiler(*this);
   }
 
   if (WITH_CUBLAS){
-    cublas::set_profiler(*this);
+    // cublas::set_profiler(*this);
   }
 
   if (WITH_NCCL){

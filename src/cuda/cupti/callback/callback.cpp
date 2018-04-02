@@ -594,12 +594,16 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
 
   auto &profiler = cuda::cupti::callback::config::profiler();
 
+  if (!profiler.driver().this_thread().is_cupti_callbacks_enabled()) {
+    return;
+  }
+
   // If we're not nesting, only handle API exits for whatever API we're in
   if (profiler.driver().this_thread().api_stack_size()) {
     if (auto api = std::dynamic_pointer_cast<cuda::cupti::callback::Api>(
             profiler.driver().this_thread().current_api())) {
       if (api->domain() != domain) {
-        profiler.log() << "Not drilling down CPUTI API: domain mismatch\n";
+        profiler.log() << "Not drilling down CUPTI API: domain mismatch\n";
         return;
       }
     }

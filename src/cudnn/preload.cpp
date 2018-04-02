@@ -1,3 +1,4 @@
+#if false
 #include <cassert>
 #include <dlfcn.h>
 
@@ -724,3 +725,4 @@ extern "C" cudnnStatus_t cudnnPoolingForward(
 // cudnnRNNBackwardWeights
 // cudnnRNNBackwardData
 
+#endif
