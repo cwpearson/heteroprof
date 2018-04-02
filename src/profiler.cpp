@@ -10,6 +10,7 @@
 #include "cuda/cupti/callback/config.hpp"
 #include "cudnn/preload.hpp"
 #include "cublas/preload.hpp"
+#include "nccl/preload.hpp"
 #include "preload_cublas.hpp"
 #include "preload_nccl.hpp"
 #include "profiler.hpp"
@@ -121,8 +122,13 @@ Profiler::Profiler() {
     cudnn::set_profiler(*this);
   }
 
-  //Need to add if statement
-  cublas::set_profiler(*this);
+  if (WITH_CUBLAS){
+    cublas::set_profiler(*this);
+  }
+
+  if (WITH_NCCL){
+    nccl::set_profiler(*this);
+  }
 
   log() << "INFO: dumping version" << std::endl;
   log() << version() << std::endl;
