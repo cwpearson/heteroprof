@@ -22,6 +22,7 @@ fi
 # default output file
 export CPROF_OUT="$NOW"_output.cprof
 #export CPROF_ERR="err.cprof"
+export CPROF_QUIET=false
 
 export CPROF_CUPTI_DEVICE_BUFFER_SIZE=1024
 

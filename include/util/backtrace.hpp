@@ -6,7 +6,7 @@
 #include <execinfo.h>
 #include <ostream>
 
-void print_backtrace(std::ostream &os) {
+inline void print_backtrace(std::ostream &os) {
   void *buf[256];
 
   const size_t sz = backtrace(buf, 256);

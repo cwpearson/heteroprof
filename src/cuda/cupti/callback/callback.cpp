@@ -173,7 +173,7 @@ static void handleCudaLaunchKernel(const CUpti_CallbackData *cbdata,
 
   if (cbdata->callbackSite == CUPTI_API_ENTER) {
 
-    auto numArgs = profiler.driver().this_thread().configured_call().num_args();
+    const size_t numArgs = 0; // FIXME, how to get this
 
     std::vector<uintptr_t> launchArgs(numArgs);
     for (size_t i = 0; i < numArgs; ++i) {
@@ -186,7 +186,6 @@ static void handleCudaLaunchKernel(const CUpti_CallbackData *cbdata,
     auto cl = std::make_shared<CudaLaunch>(api, func, launchParams);
     profiler.driver().this_thread().api_enter(cl);
   } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
-    profiler.driver().this_thread().configured_call().finish();
     finalize_api(profiler);
   } else {
     assert(0 && "How did we get here?");
@@ -591,6 +590,7 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
                                     CUpti_CallbackData *cbdata) {
 
   (void)userdata; // data supplied at subscription
+
 
   auto &profiler = cuda::cupti::callback::config::profiler();
 
