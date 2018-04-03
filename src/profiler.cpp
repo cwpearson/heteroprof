@@ -9,6 +9,8 @@
 #include "cuda/cupti/callback/callback.hpp"
 #include "cuda/cupti/callback/config.hpp"
 #include "cudnn/preload.hpp"
+#include "cublas/preload.hpp"
+#include "nccl/preload.hpp"
 #include "preload_cublas.hpp"
 #include "preload_nccl.hpp"
 #include "profiler.hpp"
@@ -72,7 +74,8 @@ Profiler::Profiler() {
       CUPTI_ACTIVITY_KIND_KERNEL,          CUPTI_ACTIVITY_KIND_MEMCPY,
       CUPTI_ACTIVITY_KIND_ENVIRONMENT,     CUPTI_ACTIVITY_KIND_CUDA_EVENT,
       CUPTI_ACTIVITY_KIND_DRIVER,          CUPTI_ACTIVITY_KIND_RUNTIME,
-      CUPTI_ACTIVITY_KIND_SYNCHRONIZATION, CUPTI_ACTIVITY_KIND_OVERHEAD};
+      CUPTI_ACTIVITY_KIND_SYNCHRONIZATION, CUPTI_ACTIVITY_KIND_OVERHEAD
+      };
   log() << "INFO: enabling activity API" << std::endl;
   for (const auto &kind : cuptiActivityKinds) {
 
@@ -119,6 +122,14 @@ Profiler::Profiler() {
     cudnn::set_profiler(*this);
   }
 
+  if (WITH_CUBLAS){
+    cublas::set_profiler(*this);
+  }
+
+  if (WITH_NCCL){
+    nccl::set_profiler(*this);
+  }
+
   log() << "INFO: dumping version" << std::endl;
   log() << version() << std::endl;
   log() << version_git() << std::endl;
@@ -146,6 +157,12 @@ void Profiler::record(const std::string &s) { return logging::atomic_out(s); }
 void Profiler::record(const json &j) {
   return logging::atomic_out(j.dump() + "\n");
 }
+void Profiler::record(const std::vector<nlohmann::json> &j){
+  for (nlohmann::json cur_json : j){
+    logging::atomic_out(cur_json.dump() + "\n");
+  }
+}
+
 
 Driver &Profiler::driver() { return driver_; }
 

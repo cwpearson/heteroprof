@@ -98,8 +98,6 @@ static void handleCudaFree(const CUpti_CallbackData *cbdata, Profiler &profiler,
     auto api = make_api_this_thread_now(cbdata, domain);
     auto df = std::make_shared<DeviceFree>(api, devPtr);
     profiler.driver().this_thread().api_enter(df);
-
-  } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
     finalize_api(profiler);
   } else {
     assert(0 && "How did we get here?");
@@ -175,7 +173,7 @@ static void handleCudaLaunchKernel(const CUpti_CallbackData *cbdata,
 
   if (cbdata->callbackSite == CUPTI_API_ENTER) {
 
-    auto numArgs = profiler.driver().this_thread().configured_call().num_args();
+    const size_t numArgs = 0; // FIXME, how to get this
 
     std::vector<uintptr_t> launchArgs(numArgs);
     for (size_t i = 0; i < numArgs; ++i) {
@@ -188,7 +186,6 @@ static void handleCudaLaunchKernel(const CUpti_CallbackData *cbdata,
     auto cl = std::make_shared<CudaLaunch>(api, func, launchParams);
     profiler.driver().this_thread().api_enter(cl);
   } else if (cbdata->callbackSite == CUPTI_API_EXIT) {
-    profiler.driver().this_thread().configured_call().finish();
     finalize_api(profiler);
   } else {
     assert(0 && "How did we get here?");
@@ -594,14 +591,19 @@ void CUPTIAPI cuptiCallbackFunction(void *userdata, CUpti_CallbackDomain domain,
 
   (void)userdata; // data supplied at subscription
 
+
   auto &profiler = cuda::cupti::callback::config::profiler();
+
+  if (!profiler.driver().this_thread().is_cupti_callbacks_enabled()) {
+    return;
+  }
 
   // If we're not nesting, only handle API exits for whatever API we're in
   if (profiler.driver().this_thread().api_stack_size()) {
     if (auto api = std::dynamic_pointer_cast<cuda::cupti::callback::Api>(
             profiler.driver().this_thread().current_api())) {
       if (api->domain() != domain) {
-        profiler.log() << "Not drilling down CPUTI API: domain mismatch\n";
+        profiler.log() << "Not drilling down CUPTI API: domain mismatch\n";
         return;
       }
     }

@@ -23,6 +23,10 @@ json Api::to_json() const {
   return j;
 }
 
+std::vector<json> Api::to_json_vector() const {
+  assert(0 && "to_json_vector not implemented here");
+}
+
 const std::string &Api::name() const { return name_; }
 
 uint64_t Api::wall_start_ns() const { return epoch_nanos(wallStart_); }

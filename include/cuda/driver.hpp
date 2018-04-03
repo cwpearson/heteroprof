@@ -125,7 +125,6 @@ public:
     logging::atomic_err(ss.str());
     return cudnnHandleToDevice_.at(h);
   }
-
   int device(const ncclComm_t c) {
     std::stringstream ss;
     const int dev = ncclCommToDevice_.at(c);

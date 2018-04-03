@@ -4,6 +4,7 @@
 #include <atomic>
 #include <memory>
 #include <ostream>
+#include <vector>
 
 #include "nlohmann/json.hpp"
 
@@ -25,6 +26,7 @@ public:
   std::ostream &log();
   void record(const std::string &s);
   void record(const nlohmann::json &j);
+  void record(const std::vector<nlohmann::json> &j);
 
   Driver &driver();
 
